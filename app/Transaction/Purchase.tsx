@@ -5,17 +5,20 @@ import { Picker } from "@react-native-picker/picker";
 import { Link, router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Button,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Button,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
+    NativeModules
 } from "react-native";
+
+const { TaskerModule } = NativeModules;
 
 interface Purchase {
   id: number;
@@ -38,9 +41,43 @@ const Purchase = () => {
     narration: "",
   });
 
+
+const triggerTaskerSMS = async (
+      userMobile: string,
+      supplierName: string,
+      invoiceNo: string,
+      invoiceDate: string,
+      amount: string,
+
+    ) => {
+
+      try {
+   
+      await TaskerModule.sendBroadcast(
+      "com.anonymous.SEND_PUR",
+      userMobile,
+      `
+Welcome to LendenKhata
+
+Your purchase has been recorded successfully.
+
+Supplier Name: ${supplierName}
+Invoice No: ${invoiceNo}
+Invoice Date: ${invoiceDate}
+Amount: ₹${amount}
+`
+    );
+
+    console.log("Tasker broadcast sent successfully");
+  } catch (e) {
+    console.log("Tasker Error:", e);
+  }
+};
+
+
   const pushtomenu = () => {
     router.push("/(user)/transaction");
-  }
+  };
   const [supplyList, setSupplyList] = useState<
     { id: number; supplyName: string }[]
   >([]);
@@ -97,6 +134,25 @@ const Purchase = () => {
         return;
       }
 
+      const supplier = await db.getFirstAsync<{
+        supplyName: string;
+      }>("SELECT supplyName FROM Supply WHERE id = ?", [Number(form.supplyId)]);
+
+      if (!supplier) {
+        Alert.alert("Supplier not found");
+        return;
+      }
+
+      // Get logged-in user's mobile number
+      const login = await db.getFirstAsync<{ mobilenumber: string }>(
+        "SELECT mobilenumber FROM Login ORDER BY id DESC LIMIT 1",
+      );
+
+      if (!login) {
+        Alert.alert("User mobile number not found");
+        return;
+      }
+
       if (isNaN(Number(form.amount))) {
         Alert.alert("Invalid Amount");
         return;
@@ -110,14 +166,21 @@ const Purchase = () => {
         (InvoiceNo, invoiceDate, supplyId, amount, narration)
         VALUES (?, ?, ?, ?, ?)`,
         [
-          form.invoiceNo,
+          Number(form.invoiceNo),
           form.invoiceDate,
-          Number(form.supplyId), // ✅ FIXED
+          Number(form.supplyId),
           Number(form.amount),
           form.narration,
         ],
       );
 
+      await triggerTaskerSMS(
+        login.mobilenumber,
+        supplier.supplyName,
+        form.invoiceNo,
+        form.invoiceDate,
+        form.amount,
+      );
       Alert.alert("Success", "Purchase added");
 
       setForm({
@@ -170,27 +233,25 @@ const Purchase = () => {
 
   const handleUpdate = async () => {
     try {
-         
       if (!selectedInvoiceId) {
+        Alert.alert("Error", "No invoice selected");
+        return;
+      }
 
-      Alert.alert("Error", "No invoice selected");
-      return;
-    }
+      if (
+        !form.invoiceNo ||
+        !form.invoiceDate ||
+        !form.supplyId ||
+        !form.amount
+      ) {
+        Alert.alert("All fields required");
+        return;
+      }
 
-    if (
-      !form.invoiceNo ||
-      !form.invoiceDate ||
-      !form.supplyId ||
-      !form.amount
-    ) {
-      Alert.alert("All fields required");
-      return;
-    }
-
-    if (!db) {
-      Alert.alert("Database not ready");
-      return;
-    }
+      if (!db) {
+        Alert.alert("Database not ready");
+        return;
+      }
       await db.runAsync(
         `UPDATE Purchase SET 
         InvoiceNo=?, invoiceDate=?, supplyId=?, amount=?, narration=? 

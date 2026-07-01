@@ -1,20 +1,20 @@
-import  useSafeDatabase  from "@/app/hooks/useSafeDatabase";
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import { MaterialIcons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { Link, router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Button,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Button,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 
 const Sales = () => {
@@ -23,7 +23,7 @@ const Sales = () => {
 
   const pushtomenu = () => {
     router.push("/(user)/transaction");
-  }
+  };
 
   const [form, setForm] = useState<{
     invoiceNo: string;
@@ -85,14 +85,19 @@ const Sales = () => {
         return;
       }
 
+      if (isNaN(Number(form.amount))) {
+        Alert.alert("Error", "Amount must be a number");
+        return;
+      }
+
       await db.runAsync(
         `INSERT INTO Sales (InvoiceNo, invoiceDate, customerId, amount, narration)
          VALUES (?, ?, ?, ?, ?)`,
         [
-          form.invoiceNo,
+          Number(form.invoiceNo),
           form.invoiceDate,
           form.customerId,
-          form.amount,
+          Number(form.amount),
           form.narration,
         ],
       );

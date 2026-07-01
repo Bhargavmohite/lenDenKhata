@@ -1,21 +1,20 @@
 import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import { router } from "expo-router";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Button,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Button,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 
 const MoneyReceived = () => {
@@ -24,7 +23,7 @@ const MoneyReceived = () => {
 
   const pushtomenu = () => {
     router.push("/(user)/transaction");
-  }
+  };
 
   const [form, setForm] = useState({
     invoiceNo: "",
@@ -71,47 +70,56 @@ const MoneyReceived = () => {
   const handleSubmit = async () => {
     try {
       if (
-      !form.invoiceNo ||
-      !form.invoiceDate ||
-      !form.customerId ||
-      !form.amount
-    ) {
-      Alert.alert("Alert", "Please fill all required fields");
-      return;
-    }
+        !form.invoiceNo ||
+        !form.invoiceDate ||
+        !form.customerId ||
+        !form.amount ||
+        !form.bankId
+      ) {
+        Alert.alert("Alert", "Please fill all required fields");
+        return;
+      }
 
-    if (!db) return;
+      if (!db) {
+        Alert.alert("Error", "Database not initialized");
+        return;
+      }
 
-    await db.runAsync(
-      `INSERT INTO MoneyReceived 
+      if (isNaN(Number(form.amount))) {
+        Alert.alert("Error", "Amount must be a number");
+        return;
+      }
+
+      await db.runAsync(
+        `INSERT INTO MoneyReceived 
       (InvoiceNo, invoiceDate, customerId, bankId, amount, narration)
       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        form.invoiceNo,
-        form.invoiceDate,
-        form.customerId,
-        form.bankId,
-        Number(form.amount),
-        form.narration,
-      ],
-    );
+        [
+          Number(form.invoiceNo),
+          form.invoiceDate,
+          form.customerId,
+          form.bankId,
+          Number(form.amount),
+          form.narration,
+        ],
+      );
 
-    Alert.alert("Success", "Money Received added");
+      Alert.alert("Success", "Money Received added");
 
-    setForm({
-      invoiceNo: "",
-      invoiceDate: "",
-      customerId: null,
-      bankId: null,
-      amount: "",
-      narration: "",
-    });
+      setForm({
+        invoiceNo: "",
+        invoiceDate: "",
+        customerId: null,
+        bankId: null,
+        amount: "",
+        narration: "",
+      });
 
-    setRefreshList((prev) => !prev);
-    pushtomenu();
+      setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (error) {
-      Alert.alert("Error", error as string);
-      
+      console.error("MoneyReceived Error:", error);
+      Alert.alert("Error", String(error));
     }
   };
 
@@ -155,26 +163,26 @@ const MoneyReceived = () => {
     try {
       if (!selectedInvoiceId || !db) return;
 
-    await db.runAsync(
-      `UPDATE MoneyReceived SET 
+      await db.runAsync(
+        `UPDATE MoneyReceived SET 
       InvoiceNo=?, invoiceDate=?, customerId=?, bankId=?, amount=?, narration=? 
       WHERE id=?`,
-      [
-        form.invoiceNo,
-        form.invoiceDate,
-        form.customerId,
-        form.bankId,
-        Number(form.amount),
-        form.narration,
-        selectedInvoiceId,
-      ],
-    );
+        [
+          form.invoiceNo,
+          form.invoiceDate,
+          form.customerId,
+          form.bankId,
+          Number(form.amount),
+          form.narration,
+          selectedInvoiceId,
+        ],
+      );
 
-    Alert.alert("Updated");
+      Alert.alert("Updated");
 
-    setShowModifyModal(false);
-    setRefreshList((prev) => !prev);
-    pushtomenu();
+      setShowModifyModal(false);
+      setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (error) {
       Alert.alert("Error", error as string);
     }

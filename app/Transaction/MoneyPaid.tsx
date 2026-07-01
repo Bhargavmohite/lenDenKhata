@@ -5,16 +5,16 @@ import { Picker } from "@react-native-picker/picker";
 import { Link, router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Button,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Button,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 
 interface MoneyPaidType {
@@ -33,7 +33,7 @@ const money_paid = () => {
 
   const pushtomenu = () => {
     router.push("/(user)/transaction");
-  }
+  };
 
   const [form, setForm] = useState({
     invoiceNo: "",
@@ -106,28 +106,27 @@ const money_paid = () => {
       return;
     }
     try {
-
       if (
-      !form.invoiceNo ||
-      !form.invoiceDate ||
-      !form.supplyId ||
-      !form.bankId ||
-      !form.amount
-    ) {
-      Alert.alert("Alert", "Please fill all required fields");
-      return;
-    }
+        !form.invoiceNo ||
+        !form.invoiceDate ||
+        !form.supplyId ||
+        !form.bankId ||
+        !form.amount
+      ) {
+        Alert.alert("Alert", "Please fill all required fields");
+        return;
+      }
 
-    if (isNaN(Number(form.amount))) {
-      Alert.alert("Invalid Amount");
-      return;
-    }
+      if (isNaN(Number(form.amount))) {
+        Alert.alert("Invalid Amount");
+        return;
+      }
       await db.runAsync(
         `INSERT INTO MoneyPaid 
         (InvoiceNo, invoiceDate, supplyId, bankId, amount, narration)
         VALUES (?, ?, ?, ?, ?, ?)`,
         [
-          form.invoiceNo,
+          Number(form.invoiceNo),
           form.invoiceDate,
           form.supplyId,
           form.bankId,
