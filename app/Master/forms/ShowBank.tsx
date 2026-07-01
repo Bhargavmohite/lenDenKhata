@@ -1,4 +1,4 @@
-import { useSQLiteContext } from "expo-sqlite";
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 
@@ -10,18 +10,22 @@ type Bank = {
 
 const ShowBank = ({ refreshList }: { refreshList: any }) => {
   const [banklists, setbankLists] = useState<Bank[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
 
   const loadbank = async () => {
+    if (!db) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
 
       const result = await db.getAllAsync<Bank>("SELECT * FROM Bank");
       setbankLists(result);
     } catch (error) {
-      console.log("Failed to load bank");
+      console.error("Failed to load bank:", error);
     } finally {
       setLoading(false);
     }
@@ -29,12 +33,21 @@ const ShowBank = ({ refreshList }: { refreshList: any }) => {
 
   useEffect(() => {
     loadbank();
-  }, [refreshList]);
+  }, [db, refreshList]);
 
   if (loading) {
     return (
       <View className='flex-1 justify-center items-center'>
         <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Loading banks...</Text>
+      </View>
+    );
+  }
+
+  if (!db) {
+    return (
+      <View className='flex-1 justify-center items-center'>
+        <Text className='text-red-600'>Database not available</Text>
       </View>
     );
   }

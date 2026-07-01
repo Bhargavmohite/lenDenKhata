@@ -1,5 +1,5 @@
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import { useLocalSearchParams } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 
@@ -16,12 +16,16 @@ type MoneyPaidItem = {
 
 const ShowMoneyPaid = () => {
   const { refreshList } = useLocalSearchParams();
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
 
   const [moneyPaidList, setMoneyPaidList] = useState<MoneyPaidItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadMoneyPaidDetails = async () => {
+    if (!db) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
 
@@ -52,12 +56,21 @@ const ShowMoneyPaid = () => {
 
   useEffect(() => {
     loadMoneyPaidDetails();
-  }, [refreshList]);
+  }, [refreshList, db]);
 
   if (loading) {
     return (
       <View className='flex-1 justify-center items-center'>
         <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Loading money paid...</Text>
+      </View>
+    );
+  }
+
+  if (!db) {
+    return (
+      <View className='flex-1 justify-center items-center'>
+        <Text className='text-red-600'>Database not available</Text>
       </View>
     );
   }

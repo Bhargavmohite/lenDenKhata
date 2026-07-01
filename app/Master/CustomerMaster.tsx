@@ -1,8 +1,9 @@
+import  useSafeDatabase  from "@/app/hooks/useSafeDatabase";
 import { Picker } from "@react-native-picker/picker";
-import { Link } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
+import { Link, router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Button,
   Modal,
@@ -23,7 +24,8 @@ type Customer = {
 };
 
 const CustomerMaster = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [form, setForm] = useState({
     customerName: "",
@@ -34,27 +36,42 @@ const CustomerMaster = () => {
     creditPeriod: "",
   });
 
+  const pushtomenu = () => {
+    router.push("/(user)");
+  }
+
   const [customerLists, setCustomerLists] = useState<Customer[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>(-1);
   const [isModalVisible1, setIsModalVisible1] = useState(false);
   const [refreshList, setRefreshList] = useState(false);
 
-
   const loadCustomers = async () => {
+    if (!db) {
+      setIsLoading(false);
+      return;
+    }
     try {
+      setIsLoading(true);
       const result = await db.getAllAsync<Customer>("SELECT * FROM Customer");
       setCustomerLists(result);
     } catch (error) {
-      console.log("Failed to load customers");
+      console.error("Failed to load customers:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadCustomers();
-  }, [refreshList]);
-
+    if (db) {
+      loadCustomers();
+    }
+  }, [db, refreshList]);
 
   const handleSubmit = async () => {
+    if (!db) {
+      Alert.alert("Error", "Database not available");
+      return;
+    }
     try {
       if (
         !form.customerName ||
@@ -67,13 +84,11 @@ const CustomerMaster = () => {
         return;
       }
 
-
       if (!/\S+@\S+\.\S+/.test(form.email)) {
         Alert.alert("Invalid email");
         return;
       }
 
-      
       const exists = await db.getFirstAsync<Customer>(
         `SELECT * FROM Customer WHERE LOWER(TRIM(customerName)) = ?`,
         [form.customerName.trim().toLowerCase()],
@@ -85,8 +100,8 @@ const CustomerMaster = () => {
       }
 
       await db.runAsync(
-        `INSERT INTO Customer 
-        (customerName, MBCountryCode, mobileNumber, email, creditLimit, creditPeriod) 
+        `INSERT INTO Customer
+        (customerName, MBCountryCode, mobileNumber, email, creditLimit, creditPeriod)
         VALUES (?, ?, ?, ?, ?, ?)`,
         [
           form.customerName.trim(),
@@ -110,13 +125,20 @@ const CustomerMaster = () => {
       });
 
       setRefreshList((prev) => !prev);
+
+      pushtomenu();
+
     } catch (error) {
-      console.log("Insert Error:", error);
+      console.error("Insert Error:", error);
+      Alert.alert("Error", "Failed to add customer");
     }
   };
 
-
   const handleUpdate = async () => {
+    if (!db) {
+      Alert.alert("Error", "Database not available");
+      return;
+    }
     if (selectedCustomerId === -1) {
       Alert.alert("Select customer first");
       return;
@@ -124,8 +146,8 @@ const CustomerMaster = () => {
 
     try {
       await db.runAsync(
-        `UPDATE Customer 
-         SET customerName=?, MBCountryCode=?, mobileNumber=?, email=?, creditLimit=?, creditPeriod=? 
+        `UPDATE Customer
+         SET customerName=?, MBCountryCode=?, mobileNumber=?, email=?, creditLimit=?, creditPeriod=?
          WHERE id=?`,
         [
           form.customerName,
@@ -152,16 +174,41 @@ const CustomerMaster = () => {
         creditLimit: "",
         creditPeriod: "",
       });
+
+      pushtomenu();
     } catch (error) {
-      console.log(error);
+      console.error("Update error:", error);
       Alert.alert("Update failed");
     }
   };
 
-  return (
-    <ScrollView className='flex-1 px-4 py-4'>
-      <View className='p-4'>
+  if (!db) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Initializing database...</Text>
+      </View>
+    );
+  }
 
+  if (isLoading) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+  className="flex-1"
+  contentContainerStyle={{
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingBottom: 100,
+  }}
+>
+      <View className='p-4'>
         <View className='bg-white p-5 rounded-xl gap-2'>
           <Text>Customer Name</Text>
           <TextInput
@@ -220,7 +267,6 @@ const CustomerMaster = () => {
           />
         </View>
 
-
         <View className='flex-row justify-center gap-4 mt-4'>
           <Button title='Submit' onPress={handleSubmit} />
           <Button title='Modify' onPress={() => setIsModalVisible1(true)} />
@@ -245,7 +291,7 @@ const CustomerMaster = () => {
                     if (id === -1) return;
 
                     const customer = customerLists.find(
-                      (c) => Number(c.id) === Number(id)
+                      (c) => Number(c.id) === Number(id),
                     );
 
                     if (!customer) return;

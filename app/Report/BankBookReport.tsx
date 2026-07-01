@@ -1,7 +1,13 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import React, { useEffect, useState } from "react";
-import { useSQLiteContext } from "expo-sqlite";
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import { Picker } from "@react-native-picker/picker";
+import React, { useEffect, useState } from "react";
+import {
+    ActivityIndicator,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 type BankType = {
   id: number;
@@ -18,7 +24,8 @@ type RowType = {
 };
 
 const BankBookReport = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [bankList, setBankList] = useState<BankType[]>([]);
   const [bankId, setBankId] = useState<number | undefined>(undefined);
@@ -28,7 +35,12 @@ const BankBookReport = () => {
   // Load Banks
   useEffect(() => {
     const loadBanks = async () => {
+      if (!db) {
+        setIsLoading(false);
+        return;
+      }
       try {
+        setIsLoading(true);
         const result = await db.getAllAsync<BankType>(
           `SELECT id, bankName FROM Bank ORDER BY bankName`,
         );
@@ -36,14 +48,20 @@ const BankBookReport = () => {
         setBankList(result || []);
       } catch (error) {
         console.error("Error loading banks:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadBanks();
-  }, []);
+  }, [db]);
 
   // Load Ledger Data
   const loadData = async (selectedBankId: number) => {
+    if (!db) {
+      console.error("Database is not available");
+      return;
+    }
     try {
       const raw = await db.getAllAsync<any>(
         `
@@ -81,10 +99,29 @@ const BankBookReport = () => {
 
   // Auto Load when bank changes
   useEffect(() => {
-    if (bankId !== undefined) {
+    if (bankId !== undefined && db) {
       loadData(bankId);
     }
-  }, [bankId]);
+  }, [bankId, db]);
+
+  if (isLoading) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Loading report...</Text>
+      </View>
+    );
+  }
+
+  if (!db) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <Text className='text-red-600 text-center'>
+          Database not available. Please restart the app.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View className='flex-1 bg-white p-4'>
@@ -115,7 +152,7 @@ const BankBookReport = () => {
             </Text>
 
             <Text className='w-28 p-2 border-r text-xs font-bold'>
-              Purchase
+              Received
             </Text>
 
             <Text className='w-28 p-2 border-r text-xs font-bold'>Paid</Text>
@@ -141,7 +178,7 @@ const BankBookReport = () => {
                 {item.supplierName || "Unknown"}
               </Text>
 
-              {/* Purchase */}
+              {/* Received */}
               <Text className='w-28 p-2 border-r text-xs'>
                 ₹{item.purchase}
               </Text>
@@ -164,13 +201,12 @@ const BankBookReport = () => {
               </Text>
             </View>
           )}
-
         </View>
       </ScrollView>
-          {/* PDF Button */}
-          <TouchableOpacity className='bg-blue-500 px-4 py-3 rounded mt-6 items-center'>
-            <Text className='text-white font-bold'>Download PDF</Text>
-          </TouchableOpacity>
+      {/* PDF Button */}
+      <TouchableOpacity className='bg-blue-500 px-4 py-3 rounded mt-6 items-center'>
+        <Text className='text-white font-bold'>Download PDF</Text>
+      </TouchableOpacity>
     </View>
   );
 };

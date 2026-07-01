@@ -1,9 +1,12 @@
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import { router } from "expo-router";
 import { Link } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
+
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Button,
   Modal,
@@ -16,7 +19,12 @@ import {
 } from "react-native";
 
 const MoneyReceived = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
+
+  const pushtomenu = () => {
+    router.push("/(user)/transaction");
+  }
 
   const [form, setForm] = useState({
     invoiceNo: "",
@@ -61,7 +69,8 @@ const MoneyReceived = () => {
   };
 
   const handleSubmit = async () => {
-    if (
+    try {
+      if (
       !form.invoiceNo ||
       !form.invoiceDate ||
       !form.customerId ||
@@ -70,6 +79,8 @@ const MoneyReceived = () => {
       Alert.alert("Alert", "Please fill all required fields");
       return;
     }
+
+    if (!db) return;
 
     await db.runAsync(
       `INSERT INTO MoneyReceived 
@@ -97,10 +108,15 @@ const MoneyReceived = () => {
     });
 
     setRefreshList((prev) => !prev);
+    pushtomenu();
+    } catch (error) {
+      Alert.alert("Error", error as string);
+      
+    }
   };
 
   const loadInvoicesByCustomer = async (customerId: number | null) => {
-    if (!customerId) return;
+    if (!customerId || !db) return;
 
     setFilterCustomerId(customerId);
     setSelectedInvoiceId(null);
@@ -114,7 +130,7 @@ const MoneyReceived = () => {
   };
 
   const loadDetails = async (id: number | null) => {
-    if (!id) return;
+    if (!id || !db) return;
 
     setSelectedInvoiceId(id);
 
@@ -136,7 +152,8 @@ const MoneyReceived = () => {
   };
 
   const handleUpdate = async () => {
-    if (!selectedInvoiceId) return;
+    try {
+      if (!selectedInvoiceId || !db) return;
 
     await db.runAsync(
       `UPDATE MoneyReceived SET 
@@ -157,9 +174,15 @@ const MoneyReceived = () => {
 
     setShowModifyModal(false);
     setRefreshList((prev) => !prev);
+    pushtomenu();
+    } catch (error) {
+      Alert.alert("Error", error as string);
+    }
   };
 
   useEffect(() => {
+    if (!db) return;
+
     const load = async () => {
       setCustomerList(
         (await db.getAllAsync("SELECT id, customerName FROM Customer")) as any,
@@ -169,10 +192,29 @@ const MoneyReceived = () => {
       );
     };
     load();
-  }, []);
+  }, [db]);
+
+  if (!db) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Initializing database...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView className='flex-1 px-4 py-4'>
+    <ScrollView
+      className='flex-1'
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        paddingBottom: 120,
+        flexGrow: 1,
+      }}
+      keyboardShouldPersistTaps='handled'
+      showsVerticalScrollIndicator={false}
+    >
       <View className='px-4 py-4 gap-4'>
         {/* FORM */}
         <View className='w-full max-w-md self-center space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8 gap-2'>
@@ -181,6 +223,7 @@ const MoneyReceived = () => {
             className='h-14 rounded-lg px-4'
             style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
             value={form.invoiceNo}
+            placeholder='Invoice Number'
             onChangeText={(t) => setForm({ ...form, invoiceNo: t })}
           />
 
@@ -223,6 +266,7 @@ const MoneyReceived = () => {
             className='h-14 rounded-lg px-4'
             style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
             value={form.amount}
+            placeholder='Amount'
             onChangeText={(t) => setForm({ ...form, amount: t })}
           />
 
@@ -247,6 +291,7 @@ const MoneyReceived = () => {
             className='h-14 rounded-lg px-4'
             style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
             value={form.narration}
+            placeholder='Narration'
             onChangeText={(t) => setForm({ ...form, narration: t })}
           />
         </View>
@@ -289,6 +334,7 @@ const MoneyReceived = () => {
                     className='h-14 rounded-lg px-4'
                     style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
                     value={form.invoiceNo}
+                    placeholder='Invoice Number'
                     onChangeText={(t) => setForm({ ...form, invoiceNo: t })}
                   />
 
@@ -312,9 +358,11 @@ const MoneyReceived = () => {
           </View>
         </Modal>
 
-        <Link href='/Transaction/forms/showMoneyReceived'>
-          <Text>Show Customer</Text>
-        </Link>
+        <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
+          <Link href='/Transaction/forms/showMoneyReceived'>
+            <Text>Show Customer</Text>
+          </Link>
+        </View>
       </View>
     </ScrollView>
   );

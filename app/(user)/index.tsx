@@ -74,10 +74,10 @@ const index = () => {
 
           <View className='flex-1'>
             <Text className='text-base font-semibold text-black dark:text-white'>
-              Bank Master
+              Bank / Cash Master
             </Text>
             <Text className='text-sm text-gray-500 dark:text-gray-400'>
-              View, add, and manage your Banks
+              View, add, and manage your Banks and Cash
             </Text>
           </View>
 

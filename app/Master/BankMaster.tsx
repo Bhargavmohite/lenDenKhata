@@ -1,26 +1,44 @@
-import { useSQLiteContext } from "expo-sqlite";
+import  useSafeDatabase  from "@/app/hooks/useSafeDatabase";
 import React, { useState } from "react";
-import { Alert, Button, Text, TextInput, View } from "react-native";
+import {
+    ActivityIndicator,
+    Alert,
+    Button,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
 import ShowBank from "./forms/ShowBank";
+import { router } from "expo-router";
+
 
 type banks = {
   bank: string;
 };
 
 const BankMaster = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [form, setForm] = useState({
     bankName: "",
     OpeningBalance: 0,
   });
 
+  const pushtomenu = () => {
+    router.push("/(user)");
+  }
   const [refreshList, setRefreshList] = useState(false);
 
   const handlesubmit = async () => {
     try {
       if (!form.bankName) {
         Alert.alert("Oops", "All fields Required..");
+        return;
+      }
+
+      if (!db) {
+        Alert.alert("Error", "Database not initialized");
         return;
       }
 
@@ -47,10 +65,21 @@ const BankMaster = () => {
         bankName: "",
         OpeningBalance: 0,
       });
+
+      pushtomenu();
     } catch (error) {
       console.log("Error :", error);
     }
   };
+
+  if (!db) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Initializing database...</Text>
+      </View>
+    );
+  }
 
   return (
     <View className='p-4'>

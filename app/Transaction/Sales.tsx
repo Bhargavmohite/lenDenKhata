@@ -1,10 +1,11 @@
+import  useSafeDatabase  from "@/app/hooks/useSafeDatabase";
 import { MaterialIcons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import { Link } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
+import { Link, router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Button,
   Modal,
@@ -17,7 +18,12 @@ import {
 } from "react-native";
 
 const Sales = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
+
+  const pushtomenu = () => {
+    router.push("/(user)/transaction");
+  }
 
   const [form, setForm] = useState<{
     invoiceNo: string;
@@ -64,6 +70,10 @@ const Sales = () => {
   };
 
   const handleSubmit = async () => {
+    if (!db) {
+      Alert.alert("Error", "Database not available");
+      return;
+    }
     try {
       if (
         !form.invoiceNo ||
@@ -98,50 +108,65 @@ const Sales = () => {
       });
 
       setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (error) {
-      console.log("SalesError :", error);
+      console.error("Sales Error:", error);
+      Alert.alert("Error", "Failed to add sales");
     }
   };
 
   /* LOAD INVOICES */
   const loadInvoicesByCustomer = async (customerId: number | null) => {
-    if (customerId === null) return;
+    if (customerId === null || !db) return;
 
     setFilterCustomerId(customerId);
     setSelectedInvoiceId(null);
     setInvoiceList([]);
 
-    const result = await db.getAllAsync(
-      "SELECT id, InvoiceNo FROM Sales WHERE customerId = ?",
-      [customerId],
-    );
+    try {
+      const result = await db.getAllAsync(
+        "SELECT id, InvoiceNo FROM Sales WHERE customerId = ?",
+        [customerId],
+      );
 
-    setInvoiceList(result as any);
+      setInvoiceList(result as any);
+    } catch (error) {
+      console.error("Error loading invoices:", error);
+    }
   };
 
   /* LOAD SALES DETAILS */
   const loadSalesDetails = async (SalesId: number | null) => {
-    if (SalesId === null) return;
+    if (SalesId === null || !db) return;
 
     setSelectedInvoiceId(SalesId);
 
-    const result = (await db.getFirstAsync("SELECT * FROM Sales WHERE id = ?", [
-      SalesId,
-    ])) as any;
+    try {
+      const result = (await db.getFirstAsync(
+        "SELECT * FROM Sales WHERE id = ?",
+        [SalesId],
+      )) as any;
 
-    if (result) {
-      setForm({
-        invoiceNo: result.InvoiceNo,
-        invoiceDate: result.invoiceDate,
-        customerId: result.customerId,
-        amount: String(result.amount),
-        narration: result.narration || "",
-      });
+      if (result) {
+        setForm({
+          invoiceNo: result.InvoiceNo,
+          invoiceDate: result.invoiceDate,
+          customerId: result.customerId,
+          amount: String(result.amount),
+          narration: result.narration || "",
+        });
+      }
+    } catch (error) {
+      console.error("Error loading sales details:", error);
     }
   };
 
   /* UPDATE */
   const handleUpdate = async () => {
+    if (!db) {
+      Alert.alert("Error", "Database not available");
+      return;
+    }
     try {
       if (!selectedInvoiceId) {
         Alert.alert("Error", "No invoice selected");
@@ -159,7 +184,7 @@ const Sales = () => {
       }
 
       await db.runAsync(
-        `UPDATE Sales 
+        `UPDATE Sales
          SET InvoiceNo = ?, invoiceDate = ?, customerId = ?, amount = ?, narration = ?
          WHERE id = ?`,
         [
@@ -185,25 +210,53 @@ const Sales = () => {
       });
 
       setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (error) {
-      console.log("Update Error :", error);
+      console.error("Update Error:", error);
+      Alert.alert("Error", "Failed to update sales");
     }
   };
 
   useEffect(() => {
     const loadCustomers = async () => {
+      if (!db) {
+        console.error("Database not available");
+        setIsLoading(false);
+        return;
+      }
       try {
+        setIsLoading(true);
         const result = await db.getAllAsync(
           "SELECT id, customerName FROM Customer ORDER BY customerName",
         );
         setCustomerList(result as any);
       } catch (error) {
         console.error("Error loading customers:", error);
+        Alert.alert("Error", "Failed to load customers");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadCustomers();
-  }, []);
+  }, [db]);
+
+  if (!db) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Initializing database...</Text>
+      </View>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -273,7 +326,7 @@ const Sales = () => {
           />
         </View>
         {/* Buttons */}
-        <View className='flex-row justify-center gap-4'>
+        <View className='flex-row justify-center gap-4 mt-4'>
           <Button title='Submit' onPress={handleSubmit} />
           <Button title='Modify' onPress={() => setShowModifyModal(true)} />
         </View>
@@ -413,7 +466,7 @@ const Sales = () => {
           </View>
         </Modal>
 
-        <View className='flex items-center mt-4'>
+        <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
           <Link
             href={{
               pathname: "/Transaction/forms/showSales",

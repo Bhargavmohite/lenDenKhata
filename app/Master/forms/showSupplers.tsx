@@ -1,21 +1,25 @@
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import { useLocalSearchParams } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 
 const ShowSupplers = () => {
   const { refresh } = useLocalSearchParams();
   const [supplyList, setSupplyList] = useState<any[]>([]);
-  const [isloading, setIsloading] = useState(false);
-  const db = useSQLiteContext();
+  const [isloading, setIsloading] = useState(true);
+  const db = useSafeDatabase();
 
   const loadSupplier = async () => {
+    if (!db) {
+      setIsloading(false);
+      return;
+    }
     try {
       setIsloading(true);
       const result = await db.getAllAsync("SELECT * FROM Supply");
       setSupplyList(result);
     } catch (error) {
-      console.log("Database Error :", error);
+      console.error("Database Error :", error);
     } finally {
       setIsloading(false);
     }
@@ -23,12 +27,21 @@ const ShowSupplers = () => {
 
   useEffect(() => {
     loadSupplier();
-  }, [refresh]);
+  }, [refresh, db]);
 
   if (isloading) {
     return (
       <View className='flex-1 justify-center items-center'>
         <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Loading suppliers...</Text>
+      </View>
+    );
+  }
+
+  if (!db) {
+    return (
+      <View className='flex-1 justify-center items-center'>
+        <Text className='text-red-600'>Database not available</Text>
       </View>
     );
   }
@@ -41,7 +54,6 @@ const ShowSupplers = () => {
       contentContainerStyle={{ paddingBottom: 30 }}
       renderItem={({ item }) => (
         <View className='mx-4 my-2 p-4 bg-white rounded-2xl shadow-sm'>
-
           <View className='flex-row justify-between items-center mb-2'>
             <Text className='text-lg font-bold text-blue-600'>
               🧔 {String(item.supplyName ?? "")}
@@ -49,9 +61,7 @@ const ShowSupplers = () => {
             <Text className='text-xs text-gray-400'>
               ID: {String(item.id ?? "")}
             </Text>
-
           </View>
-
 
           <Text className='text-gray-700 mb-1'>
             📞 {String(item.MBCountryCode ?? "")}{" "}
@@ -61,12 +71,6 @@ const ShowSupplers = () => {
           <Text className='text-gray-600 mb-3'>
             ✉️ {String(item.email ?? "")}
           </Text>
-
-
-
-
-
-
 
           <View className='flex-row justify-between bg-blue-50 p-3 rounded-xl'>
             <View>

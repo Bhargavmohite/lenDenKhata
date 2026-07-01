@@ -1,10 +1,11 @@
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import { MaterialIcons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import { Link } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
+import { Link, router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Button,
   Modal,
@@ -27,7 +28,12 @@ interface MoneyPaidType {
 }
 
 const money_paid = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
+
+  const pushtomenu = () => {
+    router.push("/(user)/transaction");
+  }
 
   const [form, setForm] = useState({
     invoiceNo: "",
@@ -74,6 +80,8 @@ const money_paid = () => {
   };
 
   useEffect(() => {
+    if (!db) return;
+
     const loadSupplies = async () => {
       const result = await db.getAllAsync(
         "SELECT id, supplyName FROM Supply ORDER BY supplyName",
@@ -90,10 +98,16 @@ const money_paid = () => {
 
     loadSupplies();
     loadBanks();
-  }, []);
+  }, [db]);
 
   const handleSubmit = async () => {
-    if (
+    if (!db) {
+      Alert.alert("Alert", "Database is not ready");
+      return;
+    }
+    try {
+
+      if (
       !form.invoiceNo ||
       !form.invoiceDate ||
       !form.supplyId ||
@@ -108,8 +122,6 @@ const money_paid = () => {
       Alert.alert("Invalid Amount");
       return;
     }
-
-    try {
       await db.runAsync(
         `INSERT INTO MoneyPaid 
         (InvoiceNo, invoiceDate, supplyId, bankId, amount, narration)
@@ -136,13 +148,14 @@ const money_paid = () => {
       });
 
       setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (error) {
       console.log(error);
     }
   };
 
   const loadInvoicesBySupplier = async (supplierId: number | null) => {
-    if (!supplierId) return;
+    if (!supplierId || !db) return;
 
     setFilterSupplierId(supplierId);
     setSelectedInvoiceId(null);
@@ -156,7 +169,7 @@ const money_paid = () => {
   };
 
   const loadPurchaseDetails = async (id: number | null) => {
-    if (!id) return;
+    if (!id || !db) return;
 
     setSelectedInvoiceId(id);
 
@@ -180,6 +193,11 @@ const money_paid = () => {
   };
 
   const handleUpdate = async () => {
+    if (!db) {
+      Alert.alert("Alert", "Database is not ready");
+      return;
+    }
+
     if (
       !selectedInvoiceId ||
       !form.invoiceNo ||
@@ -222,10 +240,20 @@ const money_paid = () => {
       });
 
       setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (error) {
       console.log(error);
     }
   };
+
+  if (!db) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Initializing database...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -306,7 +334,7 @@ const money_paid = () => {
         </View>
 
         {/* BUTTONS */}
-        <View className='flex-row justify-center gap-4'>
+        <View className='flex-row justify-center gap-4 mt-4'>
           <Button title='Submit' onPress={handleSubmit} />
           <Button title='Modify' onPress={() => setShowModifyModal(true)} />
         </View>
@@ -412,14 +440,16 @@ const money_paid = () => {
         </Modal>
 
         {/* NAV */}
-        <Link
-          href={{
-            pathname: "/Transaction/forms/showMoneyPaid",
-            params: { refresh: refreshList ? "1" : "0" },
-          }}
-        >
-          <Text>Show Money Paid</Text>
-        </Link>
+        <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
+          <Link
+            href={{
+              pathname: "/Transaction/forms/showMoneyPaid",
+              params: { refresh: refreshList ? "1" : "0" },
+            }}
+          >
+            <Text>Show Money Paid</Text>
+          </Link>
+        </View>
       </View>
     </ScrollView>
   );

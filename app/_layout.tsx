@@ -98,7 +98,21 @@ export default function RootLayout() {
                 FOREIGN KEY (customerId) REFERENCES Customer(id),
                 FOREIGN KEY (bankId) REFERENCES Bank(id)
               );`);
-          } catch (error) {}
+
+            await db.execAsync(`DROP TABLE IF EXISTS Login;`);
+
+            await db.execAsync(`
+              CREATE TABLE IF NOT EXISTS Login (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                mobilenumber TEXT,
+                password TEXT,
+                createdDate TEXT,
+                expiryDate TEXT
+              );`);
+
+          } catch (error) {
+            console.error("Database initialization error:", error);
+          }
         }}
       >
         <Stack>

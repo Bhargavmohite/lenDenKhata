@@ -1,13 +1,20 @@
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import { Picker } from "@react-native-picker/picker";
-import { useSQLiteContext } from "expo-sqlite";
-import React, { useEffect, useMemo, useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import { TouchableOpacity } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+    ActivityIndicator,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 const CustomerLedgerReport = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [rows, setRows] = useState<any[]>([]);
   const [customerList, setCustomerList] = useState<
@@ -31,17 +38,32 @@ const CustomerLedgerReport = () => {
   // 📦 Load Customers
   useEffect(() => {
     const loadCustomers = async () => {
-      const result = await db.getAllAsync(
-        "SELECT id, customerName FROM Customer ORDER BY customerName",
-      );
-      setCustomerList(result);
+      if (!db) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const result = (await db.getAllAsync(
+          "SELECT id, customerName FROM Customer ORDER BY customerName",
+        )) as { id: number; customerName: string }[];
+        setCustomerList(result);
+      } catch (error) {
+        console.error("Error loading customers:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadCustomers();
-  }, []);
+  }, [db]);
 
   // 📊 Load Ledger (Filtered by customer)
   const loadData = async (customerId: number) => {
+    if (!db) {
+      console.error("Database is not available");
+      return;
+    }
     const raw = await db.getAllAsync(
       `
       SELECT 
@@ -84,11 +106,11 @@ const CustomerLedgerReport = () => {
 
   // 🔁 Reload when customer changes
   useEffect(() => {
-    if (form.customerId) {
+    if (form.customerId && db) {
       setRows([]);
       loadData(form.customerId);
     }
-  }, [form.customerId]);
+  }, [form.customerId, db]);
 
   // 📅 Format Date → 27-03-2026
   const formatDate = (date: string) => {
@@ -96,6 +118,9 @@ const CustomerLedgerReport = () => {
     return date.split("-").reverse().join("-");
   };
 
+  // const pushtomenu = () => {
+  //   router.push("/(user)/report");
+  // }
 
   const GeneratePDF = async () => {
     if (!form.customerId || filteredRows.length === 0) {
@@ -103,12 +128,13 @@ const CustomerLedgerReport = () => {
       return;
     }
 
-      const customerName = customerList.find((c) => c.id === form.customerId)?.customerName || "";
-      const totalSales = filteredRows.reduce((a, b) => a + b.sales, 0);
-      const totalReceived = filteredRows.reduce((a, b) => a + b.received, 0);
-      const finalBalance = filteredRows.at(-1)?.balance || 0;
+    const customerName =
+      customerList.find((c) => c.id === form.customerId)?.customerName || "";
+    const totalSales = filteredRows.reduce((a, b) => a + b.sales, 0);
+    const totalReceived = filteredRows.reduce((a, b) => a + b.received, 0);
+    const finalBalance = filteredRows.at(-1)?.balance || 0;
 
-        const html = `
+    const html = `
     <html>
       <head>
         <style>
@@ -158,15 +184,33 @@ const CustomerLedgerReport = () => {
     </html>
   `;
 
-  try {
-    const { uri } = await Print.printToFileAsync({ html });
+    try {
+      const { uri } = await Print.printToFileAsync({ html });
 
-    await Sharing.shareAsync(uri);
-  } catch (error) {
-    console.error("PDF Error:", error);
+      await Sharing.shareAsync(uri);
+    } catch (error) {
+      console.error("PDF Error:", error);
+    }
+  };
+  if (isLoading) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Loading report...</Text>
+      </View>
+    );
   }
 
+  if (!db) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <Text className='text-red-600 text-center'>
+          Database not available. Please restart the app.
+        </Text>
+      </View>
+    );
   }
+
   return (
     <>
       {/* Customer Picker */}

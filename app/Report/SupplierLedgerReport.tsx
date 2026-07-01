@@ -1,18 +1,20 @@
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import { Picker } from "@react-native-picker/picker";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import { useSQLiteContext } from "expo-sqlite";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const SupplierLedgerReport = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [rows, setRows] = useState<any[]>([]);
   const [supplyList, setSupplyList] = useState<
@@ -36,7 +38,12 @@ const SupplierLedgerReport = () => {
   // 📦 Load Supplier List
   useEffect(() => {
     const loadSupplies = async () => {
+      if (!db) {
+        setIsLoading(false);
+        return;
+      }
       try {
+        setIsLoading(true);
         const result = await db.getAllAsync<{
           id: number;
           supplyName: string;
@@ -45,14 +52,20 @@ const SupplierLedgerReport = () => {
         setSupplyList(result);
       } catch (error) {
         console.error("Error loading suppliers:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadSupplies();
-  }, []);
+  }, [db]);
 
   // 📊 Load Ledger Data (by supplier)
   const loadData = async (supplierId: number) => {
+    if (!db) {
+      console.error("Database is not available");
+      return;
+    }
     try {
       const raw = await db.getAllAsync(
         `
@@ -99,11 +112,11 @@ const SupplierLedgerReport = () => {
 
   // 🔁 Reload when supplier changes
   useEffect(() => {
-    if (form.supplyId) {
+    if (form.supplyId && db) {
       setRows([]); // clear old data
       loadData(form.supplyId);
     }
-  }, [form.supplyId]);
+  }, [form.supplyId, db]);
 
   const GenratePDF = async () => {
     if (!form.supplyId || filteredRows.length === 0) {
@@ -118,9 +131,7 @@ const SupplierLedgerReport = () => {
         <h2 style="text-align:center;">Supplier Ledger</h2>
         <h3 style="text-align:center;">
         Supplier Name :
-        ${supplyList.find(
-          (item) => item.id === form.supplyId,
-        )?.supplyName}
+        ${supplyList.find((item) => item.id === form.supplyId)?.supplyName}
         </h3>
 
         <table border="1" style="width:100%; border-collapse: collapse;">
@@ -161,6 +172,25 @@ const SupplierLedgerReport = () => {
       console.error("PDF Error:", error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Loading report...</Text>
+      </View>
+    );
+  }
+
+  if (!db) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <Text className='text-red-600 text-center'>
+          Database not available. Please restart the app.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <>

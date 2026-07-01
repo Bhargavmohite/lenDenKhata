@@ -1,10 +1,11 @@
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import { Link } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
+import { Link, router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Button,
   Modal,
@@ -13,7 +14,7 @@ import {
   ScrollView,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 
 interface Purchase {
@@ -26,7 +27,8 @@ interface Purchase {
 }
 
 const Purchase = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [form, setForm] = useState({
     invoiceNo: "",
@@ -36,6 +38,9 @@ const Purchase = () => {
     narration: "",
   });
 
+  const pushtomenu = () => {
+    router.push("/(user)/transaction");
+  }
   const [supplyList, setSupplyList] = useState<
     { id: number; supplyName: string }[]
   >([]);
@@ -68,6 +73,7 @@ const Purchase = () => {
   useEffect(() => {
     const loadSupplies = async () => {
       try {
+        if (!db) return;
         const result = await db.getAllAsync<{ id: number; supplyName: string }>(
           "SELECT id, supplyName FROM Supply ORDER BY supplyName",
         );
@@ -80,22 +86,25 @@ const Purchase = () => {
   }, [db]);
 
   const handleSubmit = async () => {
-    if (
-      !form.invoiceNo ||
-      !form.invoiceDate ||
-      !form.supplyId ||
-      !form.amount
-    ) {
-      Alert.alert("Alert", "Please fill all required fields");
-      return;
-    }
-
-    if (isNaN(Number(form.amount))) {
-      Alert.alert("Invalid Amount");
-      return;
-    }
-
     try {
+      if (
+        !form.invoiceNo ||
+        !form.invoiceDate ||
+        !form.supplyId ||
+        !form.amount
+      ) {
+        Alert.alert("Alert", "Please fill all required fields");
+        return;
+      }
+
+      if (isNaN(Number(form.amount))) {
+        Alert.alert("Invalid Amount");
+        return;
+      }
+      if (!db) {
+        Alert.alert("Database not ready");
+        return;
+      }
       await db.runAsync(
         `INSERT INTO Purchase 
         (InvoiceNo, invoiceDate, supplyId, amount, narration)
@@ -120,6 +129,7 @@ const Purchase = () => {
       });
 
       setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (err) {
       console.error(err);
     }
@@ -128,17 +138,19 @@ const Purchase = () => {
   const loadInvoicesBySupplier = async (supplierId: number) => {
     setFilterSupplierId(String(supplierId));
     setSelectedInvoiceId("");
-
+    if (!db) return;
     const result = await db.getAllAsync<{ id: number; InvoiceNo: string }>(
       "SELECT id, InvoiceNo FROM Purchase WHERE supplyId = ?",
       [supplierId],
     );
 
-    setInvoiceList(result);
+    setInvoiceList(result || []);
   };
 
   const loadPurchaseDetails = async (id: number) => {
     setSelectedInvoiceId(String(id));
+
+    if (!db) return;
 
     const result = await db.getFirstAsync<Purchase>(
       "SELECT * FROM Purchase WHERE id = ?",
@@ -157,7 +169,10 @@ const Purchase = () => {
   };
 
   const handleUpdate = async () => {
-    if (!selectedInvoiceId) {
+    try {
+         
+      if (!selectedInvoiceId) {
+
       Alert.alert("Error", "No invoice selected");
       return;
     }
@@ -172,7 +187,10 @@ const Purchase = () => {
       return;
     }
 
-    try {
+    if (!db) {
+      Alert.alert("Database not ready");
+      return;
+    }
       await db.runAsync(
         `UPDATE Purchase SET 
         InvoiceNo=?, invoiceDate=?, supplyId=?, amount=?, narration=? 
@@ -201,12 +219,21 @@ const Purchase = () => {
         amount: "",
         narration: "",
       });
-
       setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (err) {
       console.error(err);
     }
   };
+
+  if (!db) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Initializing database...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -276,7 +303,7 @@ const Purchase = () => {
           />
         </View>
 
-        <View className='flex-row justify-center gap-4'>
+        <View className='flex-row justify-center gap-4 mt-4'>
           <Button title='Submit' onPress={handleSubmit} />
           <Button title='Modify' onPress={() => setShowModifyModal(true)} />
         </View>
@@ -361,15 +388,16 @@ const Purchase = () => {
             </View>
           </View>
         </Modal>
-
-        <Link
-          href={{
-            pathname: "/Transaction/forms/showPurchase",
-            params: { refresh: refreshList ? "1" : "0" },
-          }}
-        >
-          <Text>Show Purchase</Text>
-        </Link>
+        <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
+          <Link
+            href={{
+              pathname: "/Transaction/forms/showPurchase",
+              params: { refresh: refreshList ? "1" : "0" },
+            }}
+          >
+            <Text>Show Purchase</Text>
+          </Link>
+        </View>
       </View>
     </ScrollView>
   );

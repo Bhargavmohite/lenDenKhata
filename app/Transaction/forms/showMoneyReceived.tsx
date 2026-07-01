@@ -1,5 +1,5 @@
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import { useLocalSearchParams } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 
@@ -15,12 +15,17 @@ type MoneyReceivedItem = {
 
 const showMoneyReceived = () => {
   const { refreshList } = useLocalSearchParams();
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
   const [sales, setSales] = useState<MoneyReceivedItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadSalesDetails = async () => {
+    if (!db) {
+      setLoading(false);
+      return;
+    }
     try {
+      setLoading(true);
       const result = await db.getAllAsync(`
          SELECT 
           S.id,
@@ -47,15 +52,25 @@ const showMoneyReceived = () => {
 
   useEffect(() => {
     loadSalesDetails();
-  }, [refreshList]);
+  }, [refreshList, db]);
 
   if (loading) {
     return (
       <View className='flex-1 justify-center items-center'>
         <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Loading money received...</Text>
       </View>
     );
   }
+
+  if (!db) {
+    return (
+      <View className='flex-1 justify-center items-center'>
+        <Text className='text-red-600'>Database not available</Text>
+      </View>
+    );
+  }
+
   return (
     <FlatList
       className='p-2'

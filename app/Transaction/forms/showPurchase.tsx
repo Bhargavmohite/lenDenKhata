@@ -1,5 +1,5 @@
+import useSafeDatabase from "@/app/hooks/useSafeDatabase";
 import { useLocalSearchParams } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 
@@ -13,13 +13,17 @@ type Purchase = {
 };
 
 const ShowPurchase = () => {
-  const { refresh } = useLocalSearchParams(); // ✅ FIXED param name
-  const db = useSQLiteContext();
+  const { refresh } = useLocalSearchParams();
+  const db = useSafeDatabase();
 
   const [purchase, setPurchase] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadPurchaseDetails = async () => {
+    if (!db) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
 
@@ -47,12 +51,21 @@ const ShowPurchase = () => {
 
   useEffect(() => {
     loadPurchaseDetails();
-  }, [refresh]);
+  }, [refresh, db]);
 
   if (loading) {
     return (
       <View className='flex-1 justify-center items-center'>
         <ActivityIndicator size='large' />
+        <Text className='text-gray-600 mt-4'>Loading purchases...</Text>
+      </View>
+    );
+  }
+
+  if (!db) {
+    return (
+      <View className='flex-1 justify-center items-center'>
+        <Text className='text-red-600'>Database not available</Text>
       </View>
     );
   }

@@ -1,15 +1,15 @@
+import  useSafeDatabase  from "@/app/hooks/useSafeDatabase";
 import { Picker } from "@react-native-picker/picker";
-import { Link } from "expo-router";
-import { useSQLiteContext } from "expo-sqlite";
+import { Link, router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Button,
-  Modal,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    Button,
+    Modal,
+    ScrollView,
+    Text,
+    TextInput,
+    View
 } from "react-native";
 
 type Supplier = {
@@ -23,7 +23,8 @@ type Supplier = {
 };
 
 const SupplyMaster = () => {
-  const db = useSQLiteContext();
+  const db = useSafeDatabase();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [form, setForm] = useState({
     supplyName: "",
@@ -34,13 +35,19 @@ const SupplyMaster = () => {
     creditPeriod: "",
   });
 
+  const pushtomenu = () => {
+    router.push("/(user)");
+  }
+
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [supplierLists, setSupplierLists] = useState<Supplier[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>(-1);
   const [refreshList, setRefreshList] = useState(false);
 
-
   const loadSupplies = async () => {
+    if (!db) {
+      return;
+    }
     try {
       const result = await db.getAllAsync<Supplier>("SELECT * FROM Supply");
       setSupplierLists(result);
@@ -52,7 +59,6 @@ const SupplyMaster = () => {
   useEffect(() => {
     loadSupplies();
   }, [refreshList]);
-
 
   const handleSubmit = async () => {
     if (
@@ -67,6 +73,11 @@ const SupplyMaster = () => {
     }
 
     try {
+      if (!db) {
+        Alert.alert("Alert", "Database is not ready");
+        return;
+      }
+
       const existing = await db.getFirstAsync<Supplier>(
         `SELECT * FROM Supply WHERE LOWER(supplyName) = ?`,
         [form.supplyName.toLowerCase()],
@@ -103,6 +114,7 @@ const SupplyMaster = () => {
       });
 
       setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (error) {
       console.log(error);
     }
@@ -116,6 +128,11 @@ const SupplyMaster = () => {
     }
 
     try {
+      if (!db) {
+        Alert.alert("Alert", "Database is not ready");
+        return;
+      }
+
       await db.runAsync(
         `UPDATE Supply SET 
           supplyName=?, 
@@ -139,13 +156,21 @@ const SupplyMaster = () => {
       Alert.alert("Updated successfully");
       setIsModalVisible(false);
       setRefreshList((prev) => !prev);
+      pushtomenu();
     } catch (error) {
       console.log(error);
     }
   };
 
   return (
-    <ScrollView className='flex-1 px-4 py-4'>
+    <ScrollView
+      className='flex-1'
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        paddingBottom: 100,
+      }}
+    >
       <View className='bg-white p-4 rounded-xl gap-2'>
         <Text>Supplier Name</Text>
         <TextInput
@@ -165,6 +190,7 @@ const SupplyMaster = () => {
           />
           <TextInput
             value={String(form.mobileNumber ?? "")}
+            placeholder='Mobile Number'
             onChangeText={(t) =>
               setForm({
                 ...form,
@@ -178,6 +204,7 @@ const SupplyMaster = () => {
         <Text>Email</Text>
         <TextInput
           value={String(form.email ?? "")}
+          placeholder='Email'
           onChangeText={(t) => setForm({ ...form, email: t })}
           className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
         />
@@ -185,6 +212,7 @@ const SupplyMaster = () => {
         <Text>Credit Limit</Text>
         <TextInput
           value={String(form.creditLimit ?? "")}
+          placeholder='Credit Limit'
           onChangeText={(t) => setForm({ ...form, creditLimit: t })}
           className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
         />
@@ -192,6 +220,7 @@ const SupplyMaster = () => {
         <Text>Credit Period</Text>
         <TextInput
           value={String(form.creditPeriod ?? "")}
+          placeholder='Credit Period'
           onChangeText={(t) => setForm({ ...form, creditPeriod: t })}
           className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
         />
@@ -242,7 +271,7 @@ const SupplyMaster = () => {
         </View>
       </Modal>
 
-      <View className='flex items-center bg-white rounded-xl p-4 w-[85%]'>
+      <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
         <Link
           href={{
             pathname: "/Master/forms/showSupplers",
