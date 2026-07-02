@@ -6,19 +6,19 @@ import { Pressable, Text, View } from "react-native";
 const transaction = () => {
   const router = useRouter();
   const purchase = () => {
-    router.push("/Transaction/Purchase");
+    router.push('/Transaction/test/Purchase');
   };
 
   const sale = () => {
-    router.push("/Transaction/Sales");
+    router.push('/Transaction/test/Sales');
   };
 
   const money_Received = () => {
-    router.push("/Transaction/MoneyReceived");
+    router.push('/Transaction/test/MoneyReceived');
   };
 
   const money_Paid = () => {
-    router.push("/Transaction/MoneyPaid");
+    router.push('/Transaction/test/MoneyPaid');
   };
   return (
     <View className='px-4 py-4 gap-4 mt-2'>

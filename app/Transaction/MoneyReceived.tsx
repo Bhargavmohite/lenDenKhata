@@ -130,7 +130,7 @@ const MoneyReceived = () => {
     setSelectedInvoiceId(null);
 
     const result = await db.getAllAsync(
-      "SELECT id, InvoiceNo FROM MoneyReceived WHERE customerId = ?",
+      "SELECT id, InvoiceNo FROM Sales WHERE customerId = ?",
       [customerId],
     );
 
@@ -168,7 +168,7 @@ const MoneyReceived = () => {
       InvoiceNo=?, invoiceDate=?, customerId=?, bankId=?, amount=?, narration=? 
       WHERE id=?`,
         [
-          form.invoiceNo,
+          Number(form.invoiceNo),
           form.invoiceDate,
           form.customerId,
           form.bankId,
@@ -184,7 +184,7 @@ const MoneyReceived = () => {
       setRefreshList((prev) => !prev);
       pushtomenu();
     } catch (error) {
-      Alert.alert("Error", error as string);
+      Alert.alert("Error", String(error));
     }
   };
 

@@ -449,6 +449,7 @@ Amount: ₹${amount}
             </View>
           </View>
         </Modal>
+        
         <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
           <Link
             href={{
