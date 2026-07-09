@@ -75,6 +75,11 @@ const ShowMoneyPaid = () => {
     );
   }
 
+   const totalAmount = moneyPaidList.reduce(
+     (sum, item) => sum + Number(item.amount || 0), // ✅ SAFE NUMBER
+     0,
+   );
+
   return (
     <FlatList
       className='p-2'
@@ -127,6 +132,16 @@ const ShowMoneyPaid = () => {
           </View>
         );
       }}
+      ListFooterComponent={() => (
+              <View className='mx-4 my-4 p-4 bg-gray-100 rounded-2xl shadow-sm'>
+                <Text className='text-sm text-green-700 font-semibold'>
+                  Total Balance
+                </Text>
+                <Text className='text-lg font-bold text-green-800'>
+                  ₹{totalAmount}
+                </Text>
+              </View>
+            )}
       ListEmptyComponent={() => (
         <View className='items-center py-20'>
           <Text className='text-gray-400'>No Money Paid found</Text>

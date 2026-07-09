@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import React from "react";
 import FontAwesome5  from "@expo/vector-icons/FontAwesome5";
 import Foundation from "@expo/vector-icons/Foundation";
+import { AntDesign } from "@expo/vector-icons";
 
 const Tabroot = () => {
   return (
@@ -31,6 +32,16 @@ const Tabroot = () => {
           title: "Report",
           tabBarIcon: ({ color, size }) => (
             <Foundation name='page-multiple' size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name='admin'
+        options={{
+          title: "Admin",
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name='user' size={size} color={color} />
           ),
         }}
       />

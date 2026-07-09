@@ -164,122 +164,130 @@ const SupplyMaster = () => {
 
   return (
     <ScrollView
-      className='flex-1'
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        paddingBottom: 100,
-      }}
+      className='flex-1 px-4 py-4 gap-4 mt-2'
+      contentContainerStyle={{ paddingBottom: 240 }}
     >
-      <View className='bg-white p-4 rounded-xl gap-2'>
-        <Text>Supplier Name</Text>
-        <TextInput
-          value={String(form.supplyName ?? "")}
-          placeholder='Supplier Name'
-          onChangeText={(text) => setForm({ ...form, supplyName: text })}
-          className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
-        />
-
-        <Text>Mobile</Text>
-        <View className='flex-row gap-2 mb-3'>
+      <View className='p-4'>
+        <View className='bg-white p-5 rounded-xl gap-3'>
+          <Text className='text-lg font-semibold'>Supplier Name</Text>
           <TextInput
-            value={String(form.MBCountryCode ?? "")}
-            placeholder='+91'
-            onChangeText={(t) => setForm({ ...form, MBCountryCode: t })}
-            className='w-16 h-12 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white '
+            value={String(form.supplyName ?? "")}
+            placeholder='Supplier Name'
+            placeholderTextColor='#9CA3AF'
+            onChangeText={(text) => setForm({ ...form, supplyName: text })}
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
           />
-          <TextInput
-            value={String(form.mobileNumber ?? "")}
-            placeholder='Mobile Number'
-            onChangeText={(t) =>
-              setForm({
-                ...form,
-                mobileNumber: t.replace(/\D/g, "").slice(0, 10),
-              })
-            }
-            className='w-full h-12 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
-          />
-        </View>
 
-        <Text>Email</Text>
-        <TextInput
-          value={String(form.email ?? "")}
-          placeholder='Email'
-          onChangeText={(t) => setForm({ ...form, email: t })}
-          className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
-        />
+          <Text className='text-lg font-semibold'>Mobile</Text>
+          <View className='flex-row gap-2 mb-3'>
+            <TextInput
+              value={form.MBCountryCode}
+              placeholder='+91'
+              placeholderTextColor='#9CA3AF'
+              onChangeText={(t) => setForm({ ...form, MBCountryCode: t })}
+              className='w-20 h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-lg text-center text-black dark:text-white'
+            />
 
-        <Text>Credit Limit</Text>
-        <TextInput
-          value={String(form.creditLimit ?? "")}
-          placeholder='Credit Limit'
-          onChangeText={(t) => setForm({ ...form, creditLimit: t })}
-          className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
-        />
-
-        <Text>Credit Period</Text>
-        <TextInput
-          value={String(form.creditPeriod ?? "")}
-          placeholder='Credit Period'
-          onChangeText={(t) => setForm({ ...form, creditPeriod: t })}
-          className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
-        />
-      </View>
-
-      <View className='flex-row gap-3 justify-center mt-4'>
-        <Button title='Submit' onPress={handleSubmit} />
-        <Button title='Modify' onPress={() => setIsModalVisible(true)} />
-      </View>
-
-      <Modal visible={isModalVisible} transparent animationType='fade'>
-        <View className='flex-1 justify-center items-center bg-black/40'>
-          <View className='w-[90%] rounded-xl bg-white p-5'>
-            <Picker
-              selectedValue={selectedCustomerId}
-              onValueChange={(id) => {
-                if (id === -1) return;
-
-                const customer = supplierLists.find(
-                  (c) => Number(c.id) === Number(id),
-                );
-
-                if (!customer) return;
-
-                setSelectedCustomerId(Number(id));
+            <TextInput
+              value={form.mobileNumber}
+              placeholder='Mobile Number'
+              placeholderTextColor='#9CA3AF'
+              keyboardType='phone-pad'
+              onChangeText={(t) =>
                 setForm({
-                  supplyName: customer.supplyName ?? "",
-                  MBCountryCode: customer.MBCountryCode ?? "+91",
-                  mobileNumber: String(customer.mobileNumber ?? ""),
-                  email: customer.email ?? "",
-                  creditLimit: String(customer.creditLimit ?? ""),
-                  creditPeriod: String(customer.creditPeriod ?? ""),
-                });
-              }}
-            >
-              <Picker.Item label='Select Supplier' value={-1} />
-              {supplierLists.map((customer) => (
-                <Picker.Item
-                  key={customer.id}
-                  label={customer.supplyName}
-                  value={customer.id}
-                />
-              ))}
-            </Picker>
-
-            <Button title='Update' onPress={handleUpdate} />
+                  ...form,
+                  mobileNumber: t.replace(/\D/g, "").slice(0, 10),
+                })
+              }
+              className='flex-1 h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+            />
           </View>
-        </View>
-      </Modal>
 
-      <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
-        <Link
-          href={{
-            pathname: "/Master/forms/showSupplers",
-            params: { refresh: refreshList ? "1" : "0" },
-          }}
-        >
-          <Text>Show Supplier</Text>
-        </Link>
+          <Text className='text-lg font-semibold'>Email</Text>
+          <TextInput
+            value={String(form.email ?? "")}
+            placeholder='Email'
+            placeholderTextColor='#9CA3AF'
+            onChangeText={(t) => setForm({ ...form, email: t })}
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+          />
+
+          <Text className='text-lg font-semibold'>Credit Limit</Text>
+          <TextInput
+            value={String(form.creditLimit ?? "")}
+            placeholder='Credit Limit'
+            placeholderTextColor='#9CA3AF'
+            keyboardType='numeric'
+            onChangeText={(t) => setForm({ ...form, creditLimit: t })}
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+          />
+
+          <Text className='text-lg font-semibold'>Credit Period</Text>
+          <TextInput
+            value={String(form.creditPeriod ?? "")}
+            placeholder='Credit Period'
+            placeholderTextColor='#9CA3AF'
+            keyboardType='numeric'
+            onChangeText={(t) => setForm({ ...form, creditPeriod: t })}
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+          />
+        </View>
+
+        <View className='flex-row gap-3 justify-center mt-4'>
+          <Button title='Submit' onPress={handleSubmit} />
+          <Button title='Modify' onPress={() => setIsModalVisible(true)} />
+        </View>
+
+        <Modal visible={isModalVisible} transparent animationType='fade'>
+          <View className='flex-1 justify-center items-center bg-black/40'>
+            <View className='w-[90%] rounded-xl bg-white p-5'>
+              <Picker
+                selectedValue={selectedCustomerId}
+                onValueChange={(id) => {
+                  if (id === -1) return;
+
+                  const customer = supplierLists.find(
+                    (c) => Number(c.id) === Number(id),
+                  );
+
+                  if (!customer) return;
+
+                  setSelectedCustomerId(Number(id));
+                  setForm({
+                    supplyName: customer.supplyName ?? "",
+                    MBCountryCode: customer.MBCountryCode ?? "+91",
+                    mobileNumber: String(customer.mobileNumber ?? ""),
+                    email: customer.email ?? "",
+                    creditLimit: String(customer.creditLimit ?? ""),
+                    creditPeriod: String(customer.creditPeriod ?? ""),
+                  });
+                }}
+              >
+                <Picker.Item label='Select Supplier' value={-1} />
+                {supplierLists.map((customer) => (
+                  <Picker.Item
+                    key={customer.id}
+                    label={customer.supplyName}
+                    value={customer.id}
+                  />
+                ))}
+              </Picker>
+
+              <Button title='Update' onPress={handleUpdate} />
+            </View>
+          </View>
+        </Modal>
+
+        <View className='mt-8 items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] self-center'>
+          <Link
+            href={{
+              pathname: "/Master/forms/showSupplers",
+              params: { refresh: refreshList ? "1" : "0" },
+            }}
+          >
+            <Text>Show Supplier</Text>
+          </Link>
+        </View>
       </View>
     </ScrollView>
   );

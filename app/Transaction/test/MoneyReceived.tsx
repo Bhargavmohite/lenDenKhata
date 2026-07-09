@@ -13,23 +13,50 @@ const db = useSafeDatabase();
 const { TaskerModule } = NativeModules;
 
 
+const getBalance = async (customerId: number) => {
+  if (!db) return 0;
+
+  try {
+    const result = await db.getFirstAsync<{ balance: number }>(
+      `
+      SELECT SUM(amount) as balance
+      FROM MoneyReceived
+      WHERE customerId = ?
+      `,
+      [customerId]
+    );
+
+    return result?.balance ?? 0;
+  } catch (error) {
+    console.log(error);
+    return 0;
+  }
+};
+
 const triggerTaskerSMS = async (
   customerMobile: string,
   customerName: string,
   voucherNo: string,
   voucherDate: string,
   amount: string,
+  balance: number
 ) => {
   try {
     await TaskerModule.sendBroadcast(
-      "com.anonymous.SEND_MONEY_RECEIVED",
+      "com.anonymous.SEND_PUR",
       customerMobile,
       `
-      Payment Received Successfully
-      Customer : ${customerName}
-      Voucher No : ${voucherNo}
-      Date : ${voucherDate}
-      Amount : ₹${amount}
+      Len Den Khata 
+      --------------------------------
+      Money received 
+
+      Received from: ${customerName}
+      Date: ${voucherDate}
+      Amount received (Rs): ${amount}
+      Narration:${form.narration || "N/A"}
+      Balance (Rs): ${balance || "N/A"}
+
+      Thanks for your transaction
 `,
     );
   } catch (error) {
@@ -251,6 +278,12 @@ const handleSubmit = async () => {
       ],
     );
 
+    const currentBalance = await getBalance(Number(form.customerId));
+
+    if (!db) {
+      Alert.alert("Database not ready");
+      return;
+    }
     // Load Customer Details
     const customer = await db.getFirstAsync<{
       customerName: string;
@@ -267,11 +300,12 @@ const handleSubmit = async () => {
     // Send SMS
     if (customer) {
       await triggerTaskerSMS(
-        customer.mobileNumber,
+        String(customer.mobileNumber),
         customer.customerName,
         form.invoiceNo,
         form.invoiceDate,
         form.amount,
+        currentBalance,
       );
     }
 
@@ -367,23 +401,30 @@ const handleUpdate = async () => {
       >
         <View className='px-4 py-4 gap-4'>
           {/* FORM */}
-          <View className='w-full max-w-md self-center space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8 gap-2'>
-            <Text>Invoice Number</Text>
+          <View className='w-full max-w-md self-center rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8 gap-4'>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+              Invoice Number
+            </Text>
             <TextInput
-              className='h-14 rounded-lg px-4'
+              className='h-14 rounded-lg px-4 text-lg text-black dark:text-white'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
               value={form.invoiceNo}
               placeholder='Invoice Number'
+              placeholderTextColor='#617589'
               onChangeText={(t) => setForm({ ...form, invoiceNo: t })}
             />
 
-            <Text>Date</Text>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+              Date
+            </Text>
             <Pressable
               className='h-14 rounded-lg px-4 justify-center'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
               onPress={() => setShowDatePickerMain(true)}
             >
-              <Text>{form.invoiceDate || "Select Date"}</Text>
+              <Text className='text-lg text-black dark:text-white'>
+                {form.invoiceDate || "Select Date"}
+              </Text>
             </Pressable>
 
             {showDatePickerMain && (
@@ -391,11 +432,13 @@ const handleUpdate = async () => {
                 value={selectedDate}
                 mode='date'
                 display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={onDateChange}
+                onValueChange={onDateChange}
               />
             )}
 
-            <Text>Customer</Text>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+              Customer
+            </Text>
             <View
               className='rounded-lg'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
@@ -411,16 +454,21 @@ const handleUpdate = async () => {
               </Picker>
             </View>
 
-            <Text>Amount</Text>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+              Amount
+            </Text>
             <TextInput
-              className='h-14 rounded-lg px-4'
+              className='h-14 rounded-lg px-4 text-lg text-black dark:text-white'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
               value={form.amount}
               placeholder='Amount'
+              placeholderTextColor='#617589'
               onChangeText={(t) => setForm({ ...form, amount: t })}
             />
 
-            <Text>Bank</Text>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+              Bank
+            </Text>
             <View
               className='rounded-lg'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
@@ -436,12 +484,15 @@ const handleUpdate = async () => {
               </Picker>
             </View>
 
-            <Text>Narration</Text>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+              Narration
+            </Text>
             <TextInput
-              className='h-14 rounded-lg px-4'
+              className='h-14 rounded-lg px-4 text-lg text-black dark:text-white'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
               value={form.narration}
               placeholder='Narration'
+              placeholderTextColor='#617589'
               onChangeText={(t) => setForm({ ...form, narration: t })}
             />
           </View>

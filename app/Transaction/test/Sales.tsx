@@ -34,6 +34,25 @@ const [customerList, setCustomerList] = useState<
 >([]);
 
 
+const getBalance = async (customerId: number) => {
+  if (!db) return 0;
+
+  try {
+    const result = await db.getFirstAsync<{ balance: number }>(
+      `
+      SELECT SUM(amount) as balance
+      FROM Sales
+      WHERE customerId = ?
+      `,
+      [customerId]
+    );
+
+    return result?.balance ?? 0;
+  } catch (error) {
+    console.log(error);
+    return 0;
+  }
+};
 
 
 const triggerTaskerSMS = async (
@@ -41,19 +60,28 @@ const triggerTaskerSMS = async (
   customerName: string,
   invoiceNo: string,
   invoiceDate: string,
-  amount: string
+  amount: string,
+  balance: number
 ) => {
 
   try {
     await TaskerModule.sendBroadcast(
       "com.anonymous.SEND_PUR",
       customerMobile,
-      `Sales Recorded Successfully
+      `
+      Len Den Khata 
+      --------------------------------
+      Sale info
 
-Customer: ${customerName}
-Invoice No: ${invoiceNo}
-Date: ${invoiceDate}
-Amount: ₹${amount}`
+      Inv. No. : ${invoiceNo} 
+      Inv. Dt. : ${invoiceDate}
+      customer: ${customerName}
+      Amount (Rs): ${amount}
+      Narration: ${form.narration}
+      Balance (Rs): ${balance}
+
+      Thanks for your transaction.
+      `,
     );
   } catch (error) {
     console.error("Tasker SMS Error:", error);
@@ -192,6 +220,7 @@ const handleSubmit = async () => {
       ],
     );
 
+    const currentBalance = await getBalance(Number(form.customerId));
     // 2️⃣ FETCH CUSTOMER (FOR SMS)
     const customer = await db.getFirstAsync<{
       customerName: string;
@@ -203,14 +232,17 @@ const handleSubmit = async () => {
       [Number(form.customerId)],
     );
 
+
+
     // 3️⃣ SEND SMS
     if (customer) {
-      triggerTaskerSMS(
-        customer.mobileNumber,
+     await triggerTaskerSMS(
+        String(customer.mobileNumber),
         customer.customerName,
         form.invoiceNo,
         form.invoiceDate,
-        form.amount
+        form.amount,
+        currentBalance
       );
     }
 
@@ -315,243 +347,257 @@ const loadInvoicesByCustomer = async (customerId: number) => {
 
 
 return (
-    <>
+  <>
     <ScrollView
-    className='flex-1 px-4 py-4'
+      className='flex-1 px-4 py-4'
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 220 }}
     >
-    <View className='px-4 py-4'>
-    <View className='w-full max-w-md self-center space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8'>
-              <Text className='text-base font-medium pb-2'>Invoice Number</Text>
-              <TextInput
-                placeholder='Enter Invoice Number'
-                className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4'
-                value={form.invoiceNo}
-                onChangeText={(t) => setForm({ ...form, invoiceNo: t })}
-              />
-    
-              <Text className='text-base font-medium mt-4 pb-2'>Invoice Date</Text>
-              <Pressable
-                onPress={() => setShowDatePickerMain(true)}
-                className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 flex-row items-center justify-between'
-              >
-                <Text>{form.invoiceDate || "Select Date"}</Text>
-                <MaterialIcons name='calendar-today' size={22} />
-              </Pressable>
-    
-              {showDatePickerMain && (
-                <DateTimePicker
-                  value={selectedDate}
-                  mode='date'
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={onDateChange}
-                />
-              )}
-    
-              <Text className='text-base font-medium mt-4 pb-2'>Customer Name</Text>
-              <View className='rounded-lg border border-[#dbe0e6]'>
-                <Picker
-                  selectedValue={form.customerId}
-                  onValueChange={(v) =>
-                    setForm({ ...form, customerId: v !== null ? Number(v) : null })
-                  }
-                >
-                  <Picker.Item label='Select Customer' value={null} />
-                  {customerList.map((c) => (
-                    <Picker.Item key={c.id} label={c.customerName} value={c.id} />
-                  ))}
-                </Picker>
-              </View>
-    
-              <Text className='text-base font-medium mt-4 pb-2'>Amount</Text>
-              <TextInput
-                placeholder='Enter Amount'
-                keyboardType='numeric'
-                className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4'
-                value={form.amount}
-                onChangeText={(t) => setForm({ ...form, amount: t })}
-              />
-    
-              <Text className='text-base font-medium mt-4 pb-2'>Narration</Text>
-              <TextInput
-                placeholder='Enter Narration'
-                className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4'
-                value={form.narration}
-                onChangeText={(t) => setForm({ ...form, narration: t })}
-              />
-    </View>
+      <View className='px-4 py-4'>
+        <View className='w-full max-w-md self-center rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8 gap-4'>
+          <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            Invoice Number
+          </Text>
 
-{/* Buttons */}
-    <View className='flex-row justify-center gap-4 mt-4'>
-          <Button title='Submit' onPress={handleSubmit} />
-          <Button title='Modify' onPress={() => setShowModifyModal(true)} />
-    </View>
-    <Modal visible={showModifyModal} transparent animationType="fade">
-        <View className="flex-1 justify-center items-center bg-black/40">
-            <View className="bg-white w-[90%] rounded-xl p-5">
-            <Text className="text-lg font-semibold mb-4">
-                Modify Sales
+          <TextInput
+            placeholder='Enter Invoice Number'
+            placeholderTextColor='#617589'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+            value={form.invoiceNo}
+            onChangeText={(t) => setForm({ ...form, invoiceNo: t })}
+          />
+
+          <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            Invoice Date
+          </Text>
+
+          <Pressable
+            onPress={() => setShowDatePickerMain(true)}
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 flex-row items-center justify-between'
+          >
+            <Text className='text-lg text-black dark:text-white'>
+              {form.invoiceDate || "Select Date"}
             </Text>
 
-            {/* Customer Picker */}
-            <Text className="mb-2">Customer</Text>
+            <MaterialIcons name='calendar-today' size={24} color='gray' />
+          </Pressable>
 
+          {showDatePickerMain && (
+            <DateTimePicker
+              value={selectedDate}
+              mode='date'
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onValueChange={onDateChange}
+            />
+          )}
+
+          <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            Customer Name
+          </Text>
+
+          <View className='rounded-lg border border-[#dbe0e6] dark:border-gray-600 px-4'>
             <Picker
+              selectedValue={form.customerId}
+              onValueChange={(v) =>
+                setForm({
+                  ...form,
+                  customerId: v !== null ? Number(v) : null,
+                })
+              }
+            >
+              <Picker.Item label='Select Customer' value={null} />
+              {customerList.map((c) => (
+                <Picker.Item key={c.id} label={c.customerName} value={c.id} />
+              ))}
+            </Picker>
+          </View>
+
+          <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            Amount
+          </Text>
+
+          <TextInput
+            placeholder='Enter Amount'
+            placeholderTextColor='#617589'
+            keyboardType='numeric'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+            value={form.amount}
+            onChangeText={(t) => setForm({ ...form, amount: t })}
+          />
+
+          <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            Narration
+          </Text>
+
+          <TextInput
+            placeholder='Enter Narration'
+            placeholderTextColor='#617589'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+            value={form.narration}
+            onChangeText={(t) => setForm({ ...form, narration: t })}
+          />
+        </View>
+
+        {/* Buttons */}
+        <View className='flex-row justify-center gap-4 mt-4'>
+          <Button title='Submit' onPress={handleSubmit} />
+          <Button title='Modify' onPress={() => setShowModifyModal(true)} />
+        </View>
+
+        {/* Modify Modal */}
+        <Modal visible={showModifyModal} transparent animationType='fade'>
+          <View className='flex-1 justify-center items-center bg-black/40'>
+            <View className='bg-white w-[90%] rounded-xl p-5'>
+              <Text className='text-lg font-semibold mb-4'>Modify Sales</Text>
+
+              {/* Customer Picker */}
+              <Text className='mb-2'>Customer</Text>
+
+              <Picker
                 selectedValue={filterCustomerId}
                 onValueChange={(value) => {
-                if (value !== "") {
+                  if (value !== "") {
                     loadInvoicesByCustomer(Number(value));
-                }
+                  }
                 }}
-            >
-                <Picker.Item
-                label="Select Customer"
-                value=""
-                />
+              >
+                <Picker.Item label='Select Customer' value='' />
 
                 {customerList.map((customer) => (
-                <Picker.Item
+                  <Picker.Item
                     key={customer.id}
                     label={customer.customerName}
                     value={String(customer.id)}
-                />
+                  />
                 ))}
-            </Picker>
+              </Picker>
 
-            {/* Invoice Picker */}
-            {invoiceList.length > 0 && (
+              {/* Invoice Picker */}
+              {invoiceList.length > 0 && (
                 <Picker
-                selectedValue={selectedInvoiceId}
-                onValueChange={(value) => {
+                  selectedValue={selectedInvoiceId}
+                  onValueChange={(value) => {
                     if (value !== "") {
-                    loadSalesDetails(Number(value));
+                      loadSalesDetails(Number(value));
                     }
-                }}
+                  }}
                 >
-                <Picker.Item
-                    label="Select Invoice"
-                    value=""
-                />
+                  <Picker.Item label='Select Invoice' value='' />
 
-                {invoiceList.map((invoice) => (
+                  {invoiceList.map((invoice) => (
                     <Picker.Item
-                    key={invoice.id}
-                    label={String(invoice.InvoiceNo)}
-                    value={String(invoice.id)}
+                      key={invoice.id}
+                      label={String(invoice.InvoiceNo)}
+                      value={String(invoice.id)}
                     />
-                ))}
+                  ))}
                 </Picker>
-            )}
+              )}
 
-            {/* Editable Form */}
-            {selectedInvoiceId !== "" && (
+              {/* Editable Form */}
+              {selectedInvoiceId !== "" && (
                 <>
-                <Text className="mt-4 mb-2">Invoice Number</Text>
+                  <Text className='mt-4 mb-2'>Invoice Number</Text>
 
-                <TextInput
-                    className="h-12 rounded-lg border border-[#dbe0e6] px-4 mb-3"
+                  <TextInput
+                    className='h-12 rounded-lg border border-[#dbe0e6] px-4 mb-3'
                     value={form.invoiceNo}
                     onChangeText={(text) =>
-                    setForm({
+                      setForm({
                         ...form,
                         invoiceNo: text,
-                    })
+                      })
                     }
-                />
+                  />
 
-                <Text className="mb-2">Invoice Date</Text>
+                  <Text className='mb-2'>Invoice Date</Text>
 
-                <Pressable
+                  <Pressable
                     onPress={() => setShowDatePickerModal(true)}
-                    className="h-12 rounded-lg border border-[#dbe0e6] px-4 justify-center mb-3"
-                >
+                    className='h-12 rounded-lg border border-[#dbe0e6] px-4 justify-center mb-3'
+                  >
                     <Text>{form.invoiceDate || "Select Date"}</Text>
-                </Pressable>
+                  </Pressable>
 
-                {showDatePickerModal && (
+                  {showDatePickerModal && (
                     <DateTimePicker
-                    value={selectedDate}
-                    mode="date"
-                    display="default"
-                    onChange={onDateChange}
+                      value={selectedDate}
+                      mode='date'
+                      display='default'
+                      onChange={onDateChange}
                     />
-                )}
+                  )}
 
-                <Text className="mb-2">Customer</Text>
+                  <Text className='mb-2'>Customer</Text>
 
-                <View className="rounded-lg border border-[#dbe0e6] mb-3">
+                  <View className='rounded-lg border border-[#dbe0e6] mb-3'>
                     <Picker
-                    selectedValue={form.customerId}
-                    onValueChange={(value) =>
+                      selectedValue={form.customerId}
+                      onValueChange={(value) =>
                         setForm({
-                        ...form,
-                        customerId: value,
+                          ...form,
+                          customerId: value,
                         })
-                    }
+                      }
                     >
-                    <Picker.Item
-                        label="Select Customer"
-                        value=""
-                    />
+                      <Picker.Item label='Select Customer' value='' />
 
-                    {customerList.map((customer) => (
+                      {customerList.map((customer) => (
                         <Picker.Item
-                        key={customer.id}
-                        label={customer.customerName}
-                        value={String(customer.id)}
+                          key={customer.id}
+                          label={customer.customerName}
+                          value={String(customer.id)}
                         />
-                    ))}
+                      ))}
                     </Picker>
-                </View>
+                  </View>
 
-                <Text className="mb-2">Amount</Text>
+                  <Text className='mb-2'>Amount</Text>
 
-                <TextInput
-                    className="h-12 rounded-lg border border-[#dbe0e6] px-4 mb-3"
-                    keyboardType="numeric"
+                  <TextInput
+                    className='h-12 rounded-lg border border-[#dbe0e6] px-4 mb-3'
+                    keyboardType='numeric'
                     value={form.amount}
                     onChangeText={(text) =>
-                    setForm({
+                      setForm({
                         ...form,
                         amount: text,
-                    })
+                      })
                     }
-                />
+                  />
 
-                <Text className="mb-2">Narration</Text>
+                  <Text className='mb-2'>Narration</Text>
 
-                <TextInput
-                    className="h-12 rounded-lg border border-[#dbe0e6] px-4 mb-4"
+                  <TextInput
+                    className='h-12 rounded-lg border border-[#dbe0e6] px-4 mb-4'
                     value={form.narration}
                     onChangeText={(text) =>
-                    setForm({
+                      setForm({
                         ...form,
                         narration: text,
-                    })
+                      })
                     }
-                />
+                  />
 
-                <View className="flex-row justify-between">
-                    <Button
-                    title="Update"
-                    onPress={handleUpdate}
-                    />
+                  <View className='flex-row justify-between'>
+                    <Button title='Update' onPress={handleUpdate} />
 
                     <Button
-                    title="Cancel"
-                    onPress={() => {
+                      title='Cancel'
+                      onPress={() => {
                         setShowModifyModal(false);
                         setSelectedInvoiceId("");
-                    }}
+                      }}
                     />
-                </View>
+                  </View>
                 </>
-            )}
+              )}
             </View>
-        </View>
-    </Modal>
-    <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
+          </View>
+        </Modal>
+
+
+        <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
           <Link
             href={{
               pathname: "/Transaction/forms/showSales",
@@ -560,12 +606,12 @@ return (
           >
             <Text>Show Customer</Text>
           </Link>
-    </View>
-    
-    </View>
+        </View>
+      </View>
     </ScrollView>
-    </>
-  )
+  </>
+);
 }
+
 
 export default Sales

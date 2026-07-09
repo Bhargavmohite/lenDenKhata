@@ -126,40 +126,79 @@ const SupplierLedgerReport = () => {
 
     // 📄 Build HTML Table
     const html = `
-    <html>
-      <body>
-        <h2 style="text-align:center;">Supplier Ledger</h2>
-        <h3 style="text-align:center;">
-        Supplier Name :
-        ${supplyList.find((item) => item.id === form.supplyId)?.supplyName}
-        </h3>
+<html>
+  <head>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
 
-        <table border="1" style="width:100%; border-collapse: collapse;">
+      h2, h3 {
+        text-align: center;
+        margin: 5px 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      table, th, td {
+        border: 1px solid #000;
+      }
+
+      th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+
+      th, td {
+        padding: 8px;
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Supplier Ledger</h2>
+
+    <h3>
+      Supplier Name :
+      ${supplyList.find((item) => item.id === form.supplyId)?.supplyName}
+    </h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Invoice</th>
+          <th>Purchase</th>
+          <th>Paid</th>
+          <th>Balance</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        ${filteredRows
+          .map(
+            (item) => `
           <tr>
-            <th>Date</th>
-            <th>Invoice</th>
-            <th>Purchase</th>
-            <th>Paid</th>
-            <th>Balance</th>
+            <td>${item.date.split("-").reverse().join("/")}</td>
+            <td>${item.InvoiceNo}</td>
+            <td>${item.purchase}</td>
+            <td>${item.paid}</td>
+            <td>${item.balance}</td>
           </tr>
-
-          ${filteredRows
-            .map(
-              (item) => `
-            <tr>
-              <td>${item.date.split("-").reverse().join("/")}</td>
-              <td>${item.InvoiceNo}</td>
-              <td>${item.purchase}</td>
-              <td>${item.paid}</td>
-              <td>${item.balance}</td>
-            </tr>
-          `,
-            )
-            .join("")}
-        </table>
-      </body>
-    </html>
-  `;
+        `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+  </body>
+</html>
+`;
 
     try {
       const { uri } = await Print.printToFileAsync({

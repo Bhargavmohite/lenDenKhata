@@ -99,7 +99,7 @@ export default function RootLayout() {
                 FOREIGN KEY (bankId) REFERENCES Bank(id)
               );`);
 
-            await db.execAsync(`DROP TABLE IF EXISTS Login;`);
+            // await db.execAsync(`DROP TABLE IF EXISTS Login;`);
 
             await db.execAsync(`
               CREATE TABLE IF NOT EXISTS Login (

@@ -133,7 +133,11 @@ Amount: ₹${amount}
         Alert.alert("Alert", "Please fill all required fields");
         return;
       }
-
+      
+      if (!db) {
+        Alert.alert("Database not ready");
+        return;
+      }
       const supplier = await db.getFirstAsync<{
         supplyName: string;
       }>("SELECT supplyName FROM Supply WHERE id = ?", [Number(form.supplyId)]);
@@ -157,10 +161,7 @@ Amount: ₹${amount}
         Alert.alert("Invalid Amount");
         return;
       }
-      if (!db) {
-        Alert.alert("Database not ready");
-        return;
-      }
+      
       await db.runAsync(
         `INSERT INTO Purchase 
         (InvoiceNo, invoiceDate, supplyId, amount, narration)

@@ -20,26 +20,52 @@ const db = useSafeDatabase();
 
 const { TaskerModule } = NativeModules;
 
+const getBalance = async (supplierId: number) => {
+  if (!db) return 0;
+
+  try {
+    const result = await db.getFirstAsync<{ balance: number }>(
+      `
+      SELECT SUM(amount) as balance
+      FROM Purchase
+      WHERE supplyId = ?
+      `,
+      [supplierId]
+    );
+
+    return result?.balance ?? 0;
+  } catch (error) {
+    console.log(error);
+    return 0;
+  }
+};
+
+
 const triggerTaskerSMS = async (
   supplierMobile: string,
   supplierName: string,
   invoiceNo: string,
   invoiceDate: string,
   amount: string,
+  narration: string,
+  balance: number
 ) => {
   try {
     await TaskerModule.sendBroadcast(
       "com.anonymous.SEND_PUR",
       supplierMobile,
       `
-Welcome to LendenKhata
+Len Den Khata 
+--------------------------------
+Purchase info
 
-Your purchase has been recorded successfully.
+Inv. No. : ${invoiceNo}
+Inv. Dt. : ${invoiceDate}
+Amount (Rs): ${amount}
+Narration: ${narration}
+Balance (Rs): ${balance}
 
-Supplier Name: ${supplierName}
-Invoice No: ${invoiceNo}
-Invoice Date: ${invoiceDate}
-Amount: ₹${amount}
+Thanks for your transaction
 
 `,
     );
@@ -231,6 +257,8 @@ const handleSubmit = async () => {
       ],
     );
 
+    const currentBalance = await getBalance(Number(form.supplyId));
+
     if (supplier) {
       await triggerTaskerSMS(
         String(supplier.mobileNumber),
@@ -238,6 +266,8 @@ const handleSubmit = async () => {
         form.invoiceNo,
         form.invoiceDate,
         form.amount,
+        form.narration,
+        currentBalance
       );
     }
 
@@ -375,26 +405,32 @@ const loadPurchaseDetails = async (purchaseId: number) => {
         contentContainerStyle={{ paddingBottom: 240 }}
       >
         <View className='px-4 py-4'>
-          <View className='w-full max-w-md self-center space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8'>
-            <Text className='text-base font-medium pb-2'>Invoice Number</Text>
+          <View className='w-full max-w-md self-center rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8 gap-4'>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+              Invoice Number
+            </Text>
+
             <TextInput
               placeholder='Enter Invoice Number'
-              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
+              placeholderTextColor='#617589'
+              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
               value={form.invoiceNo}
               onChangeText={(t) => setForm({ ...form, invoiceNo: t })}
             />
 
-            <Text className='text-base font-medium mt-4 pb-2'>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
               Invoice Date
             </Text>
 
             <Pressable
               onPress={() => setShowDatePicker(true)}
-              className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 flex-row items-center justify-between'
+              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 flex-row items-center justify-between'
             >
-              <Text>{form.invoiceDate || "Select Date"}</Text>
+              <Text className='text-lg text-black dark:text-white'>
+                {form.invoiceDate || "Select Date"}
+              </Text>
 
-              <MaterialIcons name='calendar-today' size={22} color='gray' />
+              <MaterialIcons name='calendar-today' size={24} color='gray' />
             </Pressable>
 
             {showDatePicker && (
@@ -402,15 +438,15 @@ const loadPurchaseDetails = async (purchaseId: number) => {
                 value={selectedDate}
                 mode='date'
                 display='default'
-                onChange={onDateChange}
+                onValueChange={onDateChange}
               />
             )}
 
-            <Text className='text-base font-medium mt-4 pb-2'>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
               Supplier Name
             </Text>
 
-            <View className='rounded-lg border border-[#dbe0e6] px-4'>
+            <View className='rounded-lg border border-[#dbe0e6] dark:border-gray-600 px-4'>
               <Picker
                 selectedValue={form.supplyId}
                 onValueChange={(value) =>
@@ -432,21 +468,29 @@ const loadPurchaseDetails = async (purchaseId: number) => {
               </Picker>
             </View>
 
-            <Text className='text-base font-medium mt-4 pb-2'>Amount</Text>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+              Amount
+            </Text>
+
             <TextInput
               placeholder='Enter Amount'
-              className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4'
+              placeholderTextColor='#617589'
               keyboardType='numeric'
               value={form.amount}
               onChangeText={(t) => setForm({ ...form, amount: t })}
+              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
             />
 
-            <Text className='text-base font-medium mt-4 pb-2'>Narration</Text>
+            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+              Narration
+            </Text>
+
             <TextInput
               placeholder='Enter Narration'
-              className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4'
+              placeholderTextColor='#617589'
               value={form.narration}
               onChangeText={(t) => setForm({ ...form, narration: t })}
+              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
             />
           </View>
 
@@ -454,7 +498,7 @@ const loadPurchaseDetails = async (purchaseId: number) => {
             <Button title='Submit' onPress={handleSubmit} />
             <Button title='Modify' onPress={() => setShowModifyModal(true)} />
           </View>
-{/* modify modal */}
+          {/* modify modal */}
           <Modal visible={showModifyModal} transparent animationType='fade'>
             <View className='flex-1 justify-center items-center bg-black/40'>
               <View className='bg-white w-[90%] rounded-xl p-5'>
@@ -600,17 +644,17 @@ const loadPurchaseDetails = async (purchaseId: number) => {
               </View>
             </View>
           </Modal>
-{/* list of purchase */}
-        <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
-                    <Link
-                      href={{
-                        pathname: "/Transaction/forms/showPurchase",
-                        params: { refresh: refreshList ? "1" : "0" },
-                      }}
-                    >
-                      <Text>Show Purchase</Text>
-                    </Link>
-        </View>
+          {/* list of purchase */}
+          <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
+            <Link
+              href={{
+                pathname: "/Transaction/forms/showPurchase",
+                params: { refresh: refreshList ? "1" : "0" },
+              }}
+            >
+              <Text>Show Purchase</Text>
+            </Link>
+          </View>
         </View>
       </ScrollView>
     </>

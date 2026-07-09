@@ -201,34 +201,40 @@ const CustomerMaster = () => {
 
   return (
     <ScrollView
-  className="flex-1"
-  contentContainerStyle={{
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingBottom: 100,
-  }}
->
+      className='flex-1'
+      keyboardShouldPersistTaps='handled'
+      contentContainerStyle={{
+        flexGrow: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        paddingBottom: 150,
+      }}
+    >
       <View className='p-4'>
-        <View className='bg-white p-5 rounded-xl gap-2'>
-          <Text>Customer Name</Text>
+        <View className='bg-white p-5 rounded-xl gap-3'>
+          <Text className='text-lg font-semibold'>Customer Name</Text>
           <TextInput
             value={String(form.customerName ?? "")}
             placeholder='Customer Name'
+            placeholderTextColor='#9CA3AF'
             onChangeText={(t) => setForm({ ...form, customerName: t })}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
           />
 
-          <Text>Mobile</Text>
+          <Text className='text-lg font-semibold'>Mobile</Text>
           <View className='flex-row gap-2'>
             <TextInput
               value={String(form.MBCountryCode ?? "")}
-              placeholder='code'
+              placeholder='Code'
+              placeholderTextColor='#9CA3AF'
               onChangeText={(t) => setForm({ ...form, MBCountryCode: t })}
-              className='w-16 h-14 rounded-lg border border-[#dbe0e6] bg-white text-center'
+              className='w-16 h-14 rounded-lg border border-[#dbe0e6] text-lg text-center'
             />
+
             <TextInput
               value={String(form.mobileNumber ?? "")}
-              placeholder='Mobile number'
+              placeholder='Mobile Number'
+              placeholderTextColor='#9CA3AF'
               keyboardType='phone-pad'
               onChangeText={(t) =>
                 setForm({
@@ -236,34 +242,37 @@ const CustomerMaster = () => {
                   mobileNumber: t.replace(/\D/g, "").slice(0, 10),
                 })
               }
-              className='flex-1 h-14 rounded-lg border border-[#dbe0e6] bg-white px-4'
+              className='flex-1 h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
             />
           </View>
 
-          <Text>Email</Text>
+          <Text className='text-lg font-semibold'>Email</Text>
           <TextInput
             value={String(form.email ?? "")}
             placeholder='Email'
+            placeholderTextColor='#9CA3AF'
             onChangeText={(t) => setForm({ ...form, email: t })}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
           />
 
-          <Text>Credit Limit</Text>
+          <Text className='text-lg font-semibold'>Credit Limit</Text>
           <TextInput
             value={String(form.creditLimit ?? "")}
             placeholder='Credit Limit'
+            placeholderTextColor='#9CA3AF'
             keyboardType='numeric'
             onChangeText={(t) => setForm({ ...form, creditLimit: t })}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
           />
 
-          <Text>Credit Period</Text>
+          <Text className='text-lg font-semibold'>Credit Period</Text>
           <TextInput
             value={String(form.creditPeriod ?? "")}
-            placeholder='Credit period'
+            placeholder='Credit Period'
+            placeholderTextColor='#9CA3AF'
             keyboardType='numeric'
             onChangeText={(t) => setForm({ ...form, creditPeriod: t })}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
           />
         </View>
 
@@ -324,7 +333,7 @@ const CustomerMaster = () => {
             </View>
           </View>
         </Modal>
-        <View className='mt-6 items-centerflex items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] relative left-8 top-[2rem]'>
+        <View className='mt-8 items-center bg-white dark:bg-gray-800/50 rounded-xl p-4 w-[85%] self-center'>
           <Link
             href={{
               pathname: "/Master/forms/showCustomers",

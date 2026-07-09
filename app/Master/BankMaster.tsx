@@ -83,29 +83,30 @@ const BankMaster = () => {
 
   return (
     <View className='p-4'>
-      <View className='w-full max-w-md self-center space-y-5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8'>
+      <View className='w-full max-w-md self-center rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8 gap-4'>
         <View className='w-full'>
-          <Text className='text-base font-medium pb-2 text-black dark:text-gray-300 mt-2'>
+          <Text className='text-lg font-semibold pb-2 text-black dark:text-gray-300'>
             Bank Name
           </Text>
+
           <TextInput
-            placeholder='Enter Your Bank full name'
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
+            placeholder='Enter Your Bank Full Name'
             placeholderTextColor='#617589'
             value={String(form.bankName ?? "")}
             onChangeText={(text) => {
               setForm({ ...form, bankName: text });
             }}
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
           />
         </View>
 
         <View className='w-full'>
-          <Text className='text-base font-medium pb-2 text-black dark:text-gray-300 mt-2'>
+          <Text className='text-lg font-semibold pb-2 text-black dark:text-gray-300'>
             Opening Balance
           </Text>
+
           <TextInput
             placeholder='Enter Opening Balance'
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-base text-black dark:text-white'
             placeholderTextColor='#617589'
             keyboardType='numeric'
             value={String(form.OpeningBalance ?? "")}
@@ -115,6 +116,7 @@ const BankMaster = () => {
                 OpeningBalance: text === "" ? 0 : Number(text),
               });
             }}
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
           />
         </View>
       </View>

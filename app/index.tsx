@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -19,6 +19,7 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import { Image } from "expo-image";
 
 const { TaskerModule } = NativeModules;
 
@@ -29,7 +30,18 @@ export default function Index() {
   // };
   const db = useSQLiteContext();
   const router = useRouter();
+   const [showTrialButton, setShowTrialButton] = useState(true);
+  const checkTrialStatus = async () => {
+    if (!db) return;
 
+    try {
+      const user = await db.getFirstAsync(`SELECT id FROM Login LIMIT 1`);
+
+      setShowTrialButton(!user);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const [mobileNumber, setMobileNumber] = useState("");
   const navigatetologin = () => {
     router.push({
@@ -112,7 +124,7 @@ export default function Index() {
 
       const expiryDateObj = new Date();
 
-      expiryDateObj.setDate(expiryDateObj.getDate() + 1);
+      expiryDateObj.setDate(expiryDateObj.getDate() + 30);
 
       const expiryDate = expiryDateObj.toISOString().split("T")[0];
 
@@ -136,17 +148,15 @@ export default function Index() {
         [mobileNumber, password, today, expiryDate],
       );
 
+      setShowTrialButton(false);
+
       triggerTaskerSMS(mobileNumber, password, expiryDate);
 
+
       Alert.alert(
-        "Success",
-        "Free Trial Activated Successfully your mobile number is " +
-          mobileNumber +
-          " and password is " +
-          password +
-          " and expiry date is " +
-          expiryDate,
+        "Success", "Free trial activated successfully.",
       );
+
 
       // triggerTaskerSMS(mobileNumber, password, expiryDate);
 
@@ -165,6 +175,12 @@ export default function Index() {
     router.push("./login/list");
   };
 
+
+  useEffect(() => {
+  checkTrialStatus();
+}, [db]);
+  
+
   return (
     <SafeAreaView className='flex-1 bg-[#F7F7FF]'>
       <ScrollView
@@ -173,16 +189,15 @@ export default function Index() {
       >
         {/* Logo */}
         <View className='items-center mt-6'>
-          <LinearGradient
-            colors={["#5B4BFF", "#4734E8"]}
-            className='h-24 w-24 rounded-3xl items-center justify-center'
-          >
-            <MaterialCommunityIcons
-              name='book-open-page-variant'
-              size={45}
-              color='white'
-            />
-          </LinearGradient>
+          <View className='w-44 h-44 rounded-full bg-[#EEF2FF] items-center justify-center shadow-xl'>
+            <View className='w-40 h-40 rounded-full bg-white items-center justify-center border-4 border-white'>
+              <Image
+                source={require("./images/logos.png")}
+                className='w-34 h-34 rounded-full'
+                resizeMode='cover'
+              />
+            </View>
+          </View>
 
           <Text className='text-5xl font-bold text-gray-800 mt-6'>
             Welcome to
@@ -243,17 +258,19 @@ export default function Index() {
           </TouchableOpacity>
 
           {/* Trial */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handlesubmit}
-            className='bg-green-500 rounded-2xl py-4 mt-4 flex-row justify-center items-center'
-          >
-            <FontAwesome5 name='gift' size={20} color='white' />
+          {showTrialButton && (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handlesubmit}
+              className='bg-green-500 rounded-2xl py-4 mt-4 flex-row justify-center items-center'
+            >
+              <FontAwesome5 name='gift' size={20} color='white' />
 
-            <Text className='text-white text-xl font-bold ml-3'>
-              Get Free Trial
-            </Text>
-          </TouchableOpacity>
+              <Text className='text-white text-xl font-bold ml-3'>
+                Get Free Trial
+              </Text>
+            </TouchableOpacity>
+          )}
 
           {/* Paid */}
           <TouchableOpacity
