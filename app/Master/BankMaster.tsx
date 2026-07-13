@@ -85,7 +85,7 @@ const BankMaster = () => {
     <View className='p-4'>
       <View className='w-full max-w-md self-center rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8 gap-4'>
         <View className='w-full'>
-          <Text className='text-lg font-semibold pb-2 text-black dark:text-gray-300'>
+          <Text className='text-xl font-semibold pb-2 text-black dark:text-gray-300'>
             Bank Name
           </Text>
 
@@ -96,12 +96,12 @@ const BankMaster = () => {
             onChangeText={(text) => {
               setForm({ ...form, bankName: text });
             }}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-xl text-black dark:text-white'
           />
         </View>
 
         <View className='w-full'>
-          <Text className='text-lg font-semibold pb-2 text-black dark:text-gray-300'>
+          <Text className='text-xl font-semibold pb-2 text-black dark:text-gray-300'>
             Opening Balance
           </Text>
 
@@ -116,7 +116,7 @@ const BankMaster = () => {
                 OpeningBalance: text === "" ? 0 : Number(text),
               });
             }}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-xl text-black dark:text-white'
           />
         </View>
       </View>

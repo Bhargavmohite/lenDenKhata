@@ -406,19 +406,19 @@ const loadPurchaseDetails = async (purchaseId: number) => {
       >
         <View className='px-4 py-4'>
           <View className='w-full max-w-md self-center rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8 gap-4'>
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Invoice Number
             </Text>
 
             <TextInput
               placeholder='Enter Invoice Number'
               placeholderTextColor='#617589'
-              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-xl text-black dark:text-white'
               value={form.invoiceNo}
               onChangeText={(t) => setForm({ ...form, invoiceNo: t })}
             />
 
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Invoice Date
             </Text>
 
@@ -426,7 +426,7 @@ const loadPurchaseDetails = async (purchaseId: number) => {
               onPress={() => setShowDatePicker(true)}
               className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 flex-row items-center justify-between'
             >
-              <Text className='text-lg text-black dark:text-white'>
+              <Text className='text-xl text-black dark:text-white'>
                 {form.invoiceDate || "Select Date"}
               </Text>
 
@@ -442,7 +442,7 @@ const loadPurchaseDetails = async (purchaseId: number) => {
               />
             )}
 
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Supplier Name
             </Text>
 
@@ -455,6 +455,7 @@ const loadPurchaseDetails = async (purchaseId: number) => {
                     supplyId: value,
                   }))
                 }
+                style={{ fontSize: 20 }}
               >
                 <Picker.Item label='Select Supplier' value='' />
 
@@ -468,7 +469,7 @@ const loadPurchaseDetails = async (purchaseId: number) => {
               </Picker>
             </View>
 
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Amount
             </Text>
 
@@ -478,10 +479,10 @@ const loadPurchaseDetails = async (purchaseId: number) => {
               keyboardType='numeric'
               value={form.amount}
               onChangeText={(t) => setForm({ ...form, amount: t })}
-              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-xl text-black dark:text-white'
             />
 
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Narration
             </Text>
 
@@ -490,7 +491,7 @@ const loadPurchaseDetails = async (purchaseId: number) => {
               placeholderTextColor='#617589'
               value={form.narration}
               onChangeText={(t) => setForm({ ...form, narration: t })}
-              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-lg text-black dark:text-white'
+              className='w-full h-14 rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-xl text-black dark:text-white'
             />
           </View>
 

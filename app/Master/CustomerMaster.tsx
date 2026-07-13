@@ -201,34 +201,28 @@ const CustomerMaster = () => {
 
   return (
     <ScrollView
-      className='flex-1'
-      keyboardShouldPersistTaps='handled'
-      contentContainerStyle={{
-        flexGrow: 1,
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        paddingBottom: 150,
-      }}
+      className='flex-1 px-4 py-4 gap-4 mt-2'
+      contentContainerStyle={{ paddingBottom: 240 }}
     >
       <View className='p-4'>
         <View className='bg-white p-5 rounded-xl gap-3'>
-          <Text className='text-lg font-semibold'>Customer Name</Text>
+          <Text className='text-xl font-semibold'>Customer Name</Text>
           <TextInput
             value={String(form.customerName ?? "")}
             placeholder='Customer Name'
             placeholderTextColor='#9CA3AF'
             onChangeText={(t) => setForm({ ...form, customerName: t })}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-xl'
           />
 
-          <Text className='text-lg font-semibold'>Mobile</Text>
+          <Text className='text-xl font-semibold'>Mobile</Text>
           <View className='flex-row gap-2'>
             <TextInput
               value={String(form.MBCountryCode ?? "")}
               placeholder='Code'
               placeholderTextColor='#9CA3AF'
               onChangeText={(t) => setForm({ ...form, MBCountryCode: t })}
-              className='w-16 h-14 rounded-lg border border-[#dbe0e6] text-lg text-center'
+              className='w-20 h-14 rounded-lg border border-[#dbe0e6] text-xl text-center'
             />
 
             <TextInput
@@ -242,37 +236,37 @@ const CustomerMaster = () => {
                   mobileNumber: t.replace(/\D/g, "").slice(0, 10),
                 })
               }
-              className='flex-1 h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
+              className='flex-1 h-14 rounded-lg border border-[#dbe0e6] px-4 text-xl'
             />
           </View>
 
-          <Text className='text-lg font-semibold'>Email</Text>
+          <Text className='text-xl font-semibold'>Email</Text>
           <TextInput
             value={String(form.email ?? "")}
             placeholder='Email'
             placeholderTextColor='#9CA3AF'
             onChangeText={(t) => setForm({ ...form, email: t })}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-xl'
           />
 
-          <Text className='text-lg font-semibold'>Credit Limit</Text>
+          <Text className='text-xl font-semibold'>Credit Limit</Text>
           <TextInput
             value={String(form.creditLimit ?? "")}
             placeholder='Credit Limit'
             placeholderTextColor='#9CA3AF'
             keyboardType='numeric'
             onChangeText={(t) => setForm({ ...form, creditLimit: t })}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-xl'
           />
 
-          <Text className='text-lg font-semibold'>Credit Period</Text>
+          <Text className='text-xl font-semibold'>Credit Period</Text>
           <TextInput
             value={String(form.creditPeriod ?? "")}
             placeholder='Credit Period'
             placeholderTextColor='#9CA3AF'
             keyboardType='numeric'
             onChangeText={(t) => setForm({ ...form, creditPeriod: t })}
-            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-lg'
+            className='w-full h-14 rounded-lg border border-[#dbe0e6] px-4 text-xl'
           />
         </View>
 

@@ -109,7 +109,6 @@ export default function RootLayout() {
                 createdDate TEXT,
                 expiryDate TEXT
               );`);
-
           } catch (error) {
             console.error("Database initialization error:", error);
           }
@@ -118,6 +117,7 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name='index' options={{ headerShown: false }} />
           <Stack.Screen name='(user)' options={{ headerShown: false }} />
+          
         </Stack>
       </SQLiteProvider>
     </Suspense>

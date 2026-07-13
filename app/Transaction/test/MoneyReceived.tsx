@@ -402,27 +402,29 @@ const handleUpdate = async () => {
         <View className='px-4 py-4 gap-4'>
           {/* FORM */}
           <View className='w-full max-w-md self-center rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-8 gap-4'>
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
-              Invoice Number
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
+              Voucher Number
             </Text>
+
             <TextInput
-              className='h-14 rounded-lg px-4 text-lg text-black dark:text-white'
+              className='h-14 rounded-lg px-4 text-xl text-black dark:text-white'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
               value={form.invoiceNo}
-              placeholder='Invoice Number'
+              placeholder='Voucher Number'
               placeholderTextColor='#617589'
               onChangeText={(t) => setForm({ ...form, invoiceNo: t })}
             />
 
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Date
             </Text>
+
             <Pressable
               className='h-14 rounded-lg px-4 justify-center'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
               onPress={() => setShowDatePickerMain(true)}
             >
-              <Text className='text-lg text-black dark:text-white'>
+              <Text className='text-xl text-black dark:text-white'>
                 {form.invoiceDate || "Select Date"}
               </Text>
             </Pressable>
@@ -436,9 +438,10 @@ const handleUpdate = async () => {
               />
             )}
 
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Customer
             </Text>
+
             <View
               className='rounded-lg'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
@@ -446,6 +449,7 @@ const handleUpdate = async () => {
               <Picker
                 selectedValue={form.customerId}
                 onValueChange={(v) => setForm({ ...form, customerId: v })}
+                style={{ fontSize: 20 }}
               >
                 <Picker.Item label='Select' value={null} />
                 {customerList.map((c) => (
@@ -454,11 +458,12 @@ const handleUpdate = async () => {
               </Picker>
             </View>
 
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Amount
             </Text>
+
             <TextInput
-              className='h-14 rounded-lg px-4 text-lg text-black dark:text-white'
+              className='h-14 rounded-lg px-4 text-xl text-black dark:text-white'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
               value={form.amount}
               placeholder='Amount'
@@ -466,9 +471,10 @@ const handleUpdate = async () => {
               onChangeText={(t) => setForm({ ...form, amount: t })}
             />
 
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Bank
             </Text>
+
             <View
               className='rounded-lg'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
@@ -476,6 +482,7 @@ const handleUpdate = async () => {
               <Picker
                 selectedValue={form.bankId}
                 onValueChange={(v) => setForm({ ...form, bankId: v })}
+                style={{ fontSize: 20 }}
               >
                 <Picker.Item label='Select' value={null} />
                 {bankList.map((b) => (
@@ -484,11 +491,12 @@ const handleUpdate = async () => {
               </Picker>
             </View>
 
-            <Text className='text-lg font-semibold text-black dark:text-gray-300'>
+            <Text className='text-xl font-semibold text-black dark:text-gray-300'>
               Narration
             </Text>
+
             <TextInput
-              className='h-14 rounded-lg px-4 text-lg text-black dark:text-white'
+              className='h-14 rounded-lg px-4 text-xl text-black dark:text-white'
               style={{ borderColor: "#dbe0e6", borderWidth: 1 }}
               value={form.narration}
               placeholder='Narration'
