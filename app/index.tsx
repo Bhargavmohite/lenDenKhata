@@ -13,6 +13,7 @@ import {
   TouchableOpacity
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   Feather,
   FontAwesome5,
@@ -103,7 +104,11 @@ export default function Index() {
       }
 
       // Trial active
+      await AsyncStorage.setItem("isLoggedIn", "true");
+      await AsyncStorage.setItem("mobileNumber", mobileNumber);
+
       Alert.alert("Success", "Login Successful");
+
       navigatetologin();
     } catch (error) {
       console.log(error);
@@ -175,9 +180,47 @@ export default function Index() {
     router.push("./login/list");
   };
 
+  const checkAutoLogin = async () => {
+  const isLoggedIn = await AsyncStorage.getItem("isLoggedIn");
+  const savedMobile = await AsyncStorage.getItem("mobileNumber");
+
+const checkAutoLogin = async () => {
+  const isLoggedIn = await AsyncStorage.getItem("isLoggedIn");
+  const savedMobile = await AsyncStorage.getItem("mobileNumber");
+
+  if (isLoggedIn === "true" && savedMobile) {
+    const today = new Date().toISOString().split("T")[0];
+
+    const user = await db.getFirstAsync<{ expiryDate: string }>(
+      `SELECT expiryDate FROM Login WHERE mobilenumber = ?`,
+      [savedMobile],
+    );
+
+    if (user && user.expiryDate >= today) {
+      router.replace({
+        pathname: "./login/login",
+        params: {
+          mobileNumber: savedMobile,
+        },
+      });
+    } else {
+      await AsyncStorage.removeItem("isLoggedIn");
+      await AsyncStorage.removeItem("mobileNumber");
+
+      Alert.alert(
+        "Trial Expired",
+        "Your trial has expired. Please buy the paid version.",
+      );
+    }
+  }
+};
+};
 
   useEffect(() => {
+  if (!db) return;
+
   checkTrialStatus();
+  checkAutoLogin();
 }, [db]);
   
 
@@ -194,7 +237,7 @@ export default function Index() {
               <Image
                 source={require("./images/logos.png")}
                 className='w-34 h-34 rounded-full'
-                resizeMode='cover'
+               contentFit='cover'
               />
             </View>
           </View>
